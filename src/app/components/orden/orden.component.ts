@@ -1052,22 +1052,20 @@ finalizarLaminado(){
 
  this.maquinaService.setOrdenLaminacion(laminas).subscribe(resp=>{console.log('Laminacion Insertado')})
 
-  this.endurecedor = '';
-  this.resina = '';
-  this.loteL = '';
-  this.horasMaq = '';
-  this.tipoA = '';
-  this.anchoA = '';
-  this.loteA = '';
-  this.consumidoA = '';
-  this.tipoB = '';
-  this.anchoB = '';
-  this.loteB = '';
-  this.consumidoB = '';
-  this.observacionesL = '';
-  this.laminado='';
-  // this.horaH='';
-  // this.horaF='';
+  // this.endurecedor = '';
+  // this.resina = '';
+  // this.loteL = '';
+  // this.horasMaq = '';
+  // this.tipoA = '';
+  // this.anchoA = '';
+  // this.loteA = '';
+  // this.consumidoA = '';
+  // this.tipoB = '';
+  // this.anchoB = '';
+  // this.loteB = '';
+  // this.consumidoB = '';
+  // this.observacionesL = '';
+  // this.laminado='';
 
 
  this.horasL = 0;
@@ -1107,6 +1105,18 @@ this.ocultarBotonR=true
 this.cronoR=true
 }
 
+anchoBobina: string[] = [];
+largoBobina: string[] = [];
+actualizarBobina(index:number){
+  const ancho = this.anchoBobina[index];
+  const largo = this.largoBobina[index];
+
+  this.materiales[index].Ancho=ancho
+  this.materiales[index].Largo=largo
+
+  this.maquinaService.updateBobina(this.materiales[index]).subscribe(resp=>{console.log('TiempoMontaje insertado.')})
+}
+
 
 finalizarRebobinado(){
   this.totalR = this.sumarTiempo(this.totalR, this.horasR, this.minutosR, this.segundosR);
@@ -1120,6 +1130,8 @@ finalizarRebobinado(){
     TiempoInvertido: this.totalR,
     Observaciones:this.observacionesR
   }
+
+
  this.maquinaService.setOrdenRebobinado(rebobinado).subscribe(resp=>{console.log('Rebobinado Insertado')})
 
  this.observacionesR='';
@@ -1309,6 +1321,249 @@ checkboxDiseno() {
   this.confirDiseno = this.confirDiseno ? 1 : 0;
 }
 
+checkboxOperario2() {
+  this.operarioImpre2 = this.operarioImpre2 ? 1 : 0;
+}
+
+checkboxOperario() {
+  this.operarioImpre = this.operarioImpre ? 1 : 0;
+}
+
+
+
+intervalCD:any
+pausaCD:any
+segundosCD:number = 0
+minutosCD:number = 0
+horasCD:number = 0
+totalCD:any = '00:00:00'
+cronoCD:boolean=false
+
+iniciarDetenerClichesD(){
+
+  if(!this.intervalCD ){
+    this.cronoCD=false
+    this.intervalCD = setInterval(() => {
+      if(!this.pausaCD){
+      this.segundosCD++;
+      if (this.segundosCD === 60) {
+        this.segundosCD = 0;
+        this.minutosCD++;
+        if (this.minutosCD === 60) {
+          this.minutosCD = 0;
+          this.horasCD++;
+        }
+      }
+    }
+    }, 1000);
+    
+  }else{
+
+  this.totalCD =(this.agregarCerosIzquierda(this.horasCD)+':'+this.agregarCerosIzquierda(this.minutosCD)+':'+this.agregarCerosIzquierda(this.segundosCD))
+
+  clearInterval(this.intervalCD);
+  this.intervalCD = null;
+  this.horasCD = 0;
+  this.minutosCD = 0;
+  this.segundosCD = 0;
+  this.cronoCD=true
+  }
+}
+
+intervalCT:any
+pausaCT:any
+segundosCT:number = 0
+minutosCT:number = 0
+horasCT:number = 0
+totalCT:any = '00:00:00'
+cronoCT:boolean=false
+
+iniciarDetenerClichesT(){
+
+  if(!this.intervalCT ){
+    this.cronoCT=false
+    this.intervalCT = setInterval(() => {
+      if(!this.pausaCT){
+      this.segundosCT++;
+      if (this.segundosCT === 60) {
+        this.segundosCT = 0;
+        this.minutosCT++;
+        if (this.minutosCT === 60) {
+          this.minutosCT = 0;
+          this.horasCT++;
+        }
+      }
+    }
+    }, 1000);
+    
+  }else{
+
+  this.totalCT =(this.agregarCerosIzquierda(this.horasCT)+':'+this.agregarCerosIzquierda(this.minutosCT)+':'+this.agregarCerosIzquierda(this.segundosCT))
+
+  clearInterval(this.intervalCT);
+  this.intervalCT = null;
+  this.horasCT = 0;
+  this.minutosCT = 0;
+  this.segundosCT = 0;
+  this.cronoCT=true
+  }
+}
+
+intervalIT:any
+pausaIT:any
+segundosIT:number = 0
+minutosIT:number = 0
+horasIT:number = 0
+totalIT:any = '00:00:00'
+cronoIT:boolean=false
+
+iniciarDetenerImpresionT(){
+
+  if(!this.intervalIT ){
+    this.cronoIT=false
+    this.intervalIT = setInterval(() => {
+      if(!this.pausaIT){
+      this.segundosIT++;
+      if (this.segundosIT === 60) {
+        this.segundosIT = 0;
+        this.minutosIT++;
+        if (this.minutosIT === 60) {
+          this.minutosIT = 0;
+          this.horasIT++;
+        }
+      }
+    }
+    }, 1000);
+    
+  }else{
+
+  this.totalIT =(this.agregarCerosIzquierda(this.horasIT)+':'+this.agregarCerosIzquierda(this.minutosIT)+':'+this.agregarCerosIzquierda(this.segundosIT))
+
+  clearInterval(this.intervalIT);
+  this.intervalIT = null;
+  this.horasIT = 0;
+  this.minutosIT = 0;
+  this.segundosIT = 0;
+  this.cronoIT=true
+  }
+}
+
+intervalID:any
+pausaID:any
+segundosID:number = 0
+minutosID:number = 0
+horasID:number = 0
+totalID:any = '00:00:00'
+cronoID:boolean=false
+
+iniciarDetenerImpresionD(){
+
+  if(!this.intervalID ){
+    this.cronoID=false
+    this.intervalID = setInterval(() => {
+      if(!this.pausaID){
+      this.segundosID++;
+      if (this.segundosID === 60) {
+        this.segundosID = 0;
+        this.minutosID++;
+        if (this.minutosID === 60) {
+          this.minutosID = 0;
+          this.horasID++;
+        }
+      }
+    }
+    }, 1000);
+    
+  }else{
+
+  this.totalID =(this.agregarCerosIzquierda(this.horasID)+':'+this.agregarCerosIzquierda(this.minutosID)+':'+this.agregarCerosIzquierda(this.segundosID))
+
+  clearInterval(this.intervalID);
+  this.intervalID = null;
+  this.horasID = 0;
+  this.minutosID = 0;
+  this.segundosID = 0;
+  this.cronoID=true
+  }
+}
+
+intervalCD2:any
+pausaCD2:any
+segundosCD2:number = 0
+minutosCD2:number = 0
+horasCD2:number = 0
+totalCD2:any = '00:00:00'
+cronoCD2:boolean=false
+
+iniciarDetenerClichesD2(){
+
+  if(!this.intervalCD2 ){
+    this.cronoCD2=false
+    this.intervalCD2 = setInterval(() => {
+      if(!this.pausaCD2){
+      this.segundosCD2++;
+      if (this.segundosCD2 === 60) {
+        this.segundosCD2 = 0;
+        this.minutosCD2++;
+        if (this.minutosCD2 === 60) {
+          this.minutosCD2 = 0;
+          this.horasCD2++;
+        }
+      }
+    }
+    }, 1000);
+    
+  }else{
+
+  this.totalCD2 =(this.agregarCerosIzquierda(this.horasCD2)+':'+this.agregarCerosIzquierda(this.minutosCD2)+':'+this.agregarCerosIzquierda(this.segundosCD2))
+
+  clearInterval(this.intervalCD2);
+  this.intervalCD2 = null;
+  this.horasCD2 = 0;
+  this.minutosCD2 = 0;
+  this.segundosCD2 = 0;
+  this.cronoCD2=true
+  }
+}
+
+intervalCT2:any
+pausaCT2:any
+segundosCT2:number = 0
+minutosCT2:number = 0
+horasCT2:number = 0
+totalCT2:any = '00:00:00'
+cronoCT2:boolean=false
+
+iniciarDetenerClichesT2(){
+
+  if(!this.intervalCT2 ){
+    this.cronoCT2=false
+    this.intervalCT2 = setInterval(() => {
+      if(!this.pausaCT2){
+      this.segundosCT2++;
+      if (this.segundosCT2 === 60) {
+        this.segundosCT2 = 0;
+        this.minutosCT2++;
+        if (this.minutosCT2 === 60) {
+          this.minutosCT2 = 0;
+          this.horasCT2++;
+        }
+      }
+    }
+    }, 1000);
+    
+  }else{
+
+  this.totalCT2 =(this.agregarCerosIzquierda(this.horasCT2)+':'+this.agregarCerosIzquierda(this.minutosCT2)+':'+this.agregarCerosIzquierda(this.segundosCT2))
+
+  clearInterval(this.intervalCT2);
+  this.intervalCT2 = null;
+  this.horasCT2 = 0;
+  this.minutosCT2 = 0;
+  this.segundosCT2 = 0;
+  this.cronoCT2=true
+  }
+}
 
 revisionCliches: number|any;
 impresionCheck:any
@@ -1338,8 +1593,66 @@ r15:any
 acetato:any
 ccImpresion:any
 confirDiseno:number|any
+operarioImpre:number=0
+operarioImpre2:number=0
+
+test(){
+  console.log(this.fecha)
+  }
 
 agregarOrdenImpresion(){
+
+const impresion={
+  EjercicioOF: this.orden.EjercicioOF,
+  SerieOF: this.orden.SerieOF,
+  NumeroOF: this.orden.NumeroOF,
+  Impresion: this.orden.articulos[0].Impreso,
+  Anonima: 333,
+  Medida: 'MEDIDA',
+  Fecha: this.orden.FechaOF,
+  Cantidad: this.cantidad,
+  NumeroPedido: 666,
+  Cliente: this.orden.pedidos[0].RazonSocial,
+  RevisionCliches: this.revisionCliches,
+  ImpresionCheck: this.impresionCheck,
+  AdjuntadoCheck: this.adjuntadoCheck,
+  ClichesCheck: this.clichesCheck,
+  Impresion2Check: this.impresion2Check,
+  Observaciones: this.observacionesImpresion,
+  ClichesGrosor: this.clichesGrosor,
+  NumeroCliches: this.numCliches,
+  RefClichesComunes: this.refClichesComunes,
+  ClichesRef: this.clichesRef,
+  TipoImpresion: this.tipoImpresion,
+  MontajeMaquina: this.montajeMaquina,
+  MontajeRodillo: this.montajeRodillo,
+  Motivos: this.motivos,
+  DiaImpreso: this.fecha,
+  TratamientoMaterial: this.tratamientoMat,
+  BobinaDelantera: this.bobinaDel,
+  MaterialDelantera: this.materialDel,
+  TotalDelantera: this.totalDel,
+  BobinaTrasera: this.bobinaTras,
+  MaterialTrasera: this.materialTras,
+  TotalTrasera: this.totalTras,
+  Metoxipropanol: this.metoxi,
+  R15: this.r15,
+  Acetato: this.acetato,
+  ControlCalidadImpresion: this.ccImpresion,
+  ObservacionesImpresion: this.observacionesDurante,
+  Boceto: 'BOCETO',
+  ObservacionesDiseño: this.observacionesDiseno,
+  ConfirmacionDiseño: this.confirDiseno,
+  TiempoTotalMontajeClichesDelantera: this.totalCD,
+  TiempoTotalMontajeClichesTrasera: this.totalCT,
+  TiempoTotalImpresionDelantera: this.totalID,
+  TiempoTotalImpresionTrasera: this.totalIT,
+  TiempoTotalDesmontajeClichesDelantera: this.totalCD2,
+  TiempoTotalDesmontajeClichesTrasera: this.totalCT2,
+  OperarioImpresion: this.operarioImpre
+}
+
+this.maquinaService.setOrdenImpresion(impresion).subscribe(resp=>{console.log('Orden de Impresion insertado.')})
 
 }
 

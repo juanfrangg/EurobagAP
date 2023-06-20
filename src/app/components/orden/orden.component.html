@@ -9,7 +9,7 @@
       </ion-button>
     </ion-buttons>
 
-    <ion-tab-bar *ngIf="tabbar">
+    <ion-tab-bar>
       <ion-tab-button style="border: solid 1px black" (click)="cambiarEstado('OF')">
         <b style="font-size: 200%; color: blue" *ngIf="estado == 'OF'">Orden de fabricación</b>
         <b style="font-size: 200%; color: grey" *ngIf="estado != 'OF'">Orden de fabricación</b>
@@ -204,7 +204,7 @@
       <b>{{item.PasosMaquina}}</b>
     </ion-col>
     <ion-col size="1.7" style="border: solid 1px black; border-top: none; background-color: rgb(211, 203, 203);" *ngIf="colVisible && !stopB">
-      <button style="background-color: rgb(211, 203, 203);" (click)="iniciarDetenerBobina(i)"><b>Iniciar/Terminar</b></button>
+      <button style="background-color: rgb(211, 203, 203);" (click)="iniciarDetenerBobina(i)"><b>Iniciar/Fin</b></button>
     </ion-col>
   </ion-row>
   <ion-row class="ion-text-center" style="padding-left: 20px; padding-right: 20px">
@@ -440,7 +440,7 @@
     <b>TIPO DE IMPRESIÓN:</b>
   </ion-col>
   <ion-col size="3" style="background-color: rgb(97, 176, 212);">
-    <ion-textarea style="background-color: white; max-height: 30px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></ion-textarea>
+    <ion-textarea [(ngModel)]="tipoImpresion" style="background-color: white; max-height: 30px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></ion-textarea>
   </ion-col>
 </ion-row>
 <div style="background-color: rgb(97, 212, 174); margin-right: 20px;margin-left: 20px">
@@ -789,24 +789,54 @@
       <b>TIEMPO TOTAL MONTAJE DE CLICHÉS</b>
     </ion-col>
     <ion-col size="3">
-      <ion-textarea style="background-color: white; max-height: 30px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></ion-textarea>
+      <ion-textarea disabled="true" style="background-color: white; max-height: 30px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+        <b *ngIf="!cronoCD">{{ horasCD | number: '2.0' }}:{{ minutosCD | number: '2.0' }}:{{ segundosCD | number: '2.0' }}</b>
+        <b *ngIf="cronoCD">{{totalCD}}</b></ion-textarea>
     </ion-col>
     <ion-col size="3">
-      <ion-textarea style="background-color: white; max-height: 30px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></ion-textarea>
+      <ion-textarea disabled="true" style="background-color: white; max-height: 30px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+        <b *ngIf="!cronoCT">{{ horasCT | number: '2.0' }}:{{ minutosCT | number: '2.0' }}:{{ segundosCT | number: '2.0' }}</b>
+        <b *ngIf="cronoCT">{{totalCT}}</b></ion-textarea>
     </ion-col>
   </ion-row>
+
+<ion-row class="ion-text-center" *ngIf="!cronoCD || !cronoCT">
+  <ion-col size="6">
+  </ion-col>
+  <ion-col size="3" style="border: solid 1px black; background-color: rgb(211, 203, 203);">
+    <button style="background-color: rgb(211, 203, 203);" (click)="iniciarDetenerClichesD()"><b>Iniciar/Finalizar</b></button>
+  </ion-col>
+  <ion-col size="3" style="border: solid 1px black; background-color: rgb(211, 203, 203);">
+    <button style="background-color: rgb(211, 203, 203);" (click)="iniciarDetenerClichesT()"><b>Iniciar/Finalizar</b></button>
+  </ion-col>
+</ion-row>
 </div>
 <br>
 <div style="background-color: rgb(97, 212, 174); margin-right: 20px;margin-left: 20px">
   <ion-row class="ion-text-center">
     <ion-col size="6">
-      <b>TIEMPO TOTAL MONTAJE DE IMPRESIÓN</b>
+      <b>TIEMPO TOTAL DE IMPRESIÓN</b>
     </ion-col>
     <ion-col size="3">
-      <ion-textarea style="background-color: white; max-height: 30px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></ion-textarea>
+      <ion-textarea disabled="true" style="background-color: white; max-height: 30px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+        <b *ngIf="!cronoID">{{ horasID | number: '2.0' }}:{{ minutosID | number: '2.0' }}:{{ segundosID | number: '2.0' }}</b>
+        <b *ngIf="cronoID">{{totalID}}</b></ion-textarea>
     </ion-col>
     <ion-col size="3">
-      <ion-textarea style="background-color: white; max-height: 30px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></ion-textarea>
+      <ion-textarea disabled="true" style="background-color: white; max-height: 30px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+        <b *ngIf="!cronoIT">{{ horasIT | number: '2.0' }}:{{ minutosIT | number: '2.0' }}:{{ segundosIT | number: '2.0' }}</b>
+        <b *ngIf="cronoIT">{{totalIT}}</b></ion-textarea>
+    </ion-col>
+  </ion-row>
+
+  <ion-row class="ion-text-center" *ngIf="!cronoID || !cronoIT">
+    <ion-col size="6">
+    </ion-col>
+    <ion-col size="3" style="border: solid 1px black; background-color: rgb(211, 203, 203);">
+      <button style="background-color: rgb(211, 203, 203);" (click)="iniciarDetenerImpresionD()"><b>Iniciar/Finalizar</b></button>
+    </ion-col>
+    <ion-col size="3" style="border: solid 1px black; background-color: rgb(211, 203, 203);">
+      <button style="background-color: rgb(211, 203, 203);" (click)="iniciarDetenerImpresionT()"><b>Iniciar/Finalizar</b></button>
     </ion-col>
   </ion-row>
 </div>
@@ -817,69 +847,40 @@
       <b>TIEMPO TOTAL DESMONTAJE DE CLICHÉS</b>
     </ion-col>
     <ion-col size="3">
-      <ion-textarea style="background-color: white; max-height: 30px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></ion-textarea>
+      <ion-textarea disabled="true" style="background-color: white; max-height: 30px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+        <b *ngIf="!cronoCD2">{{ horasCD2 | number: '2.0' }}:{{ minutosCD2 | number: '2.0' }}:{{ segundosCD2 | number: '2.0' }}</b>
+        <b *ngIf="cronoCD2">{{totalCD2}}</b></ion-textarea>
     </ion-col>
     <ion-col size="3">
-      <ion-textarea style="background-color: white; max-height: 30px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></ion-textarea>
+      <ion-textarea disabled="true" style="background-color: white; max-height: 30px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+        <b *ngIf="!cronoCT2">{{ horasCT2 | number: '2.0' }}:{{ minutosCT2 | number: '2.0' }}:{{ segundosCT2 | number: '2.0' }}</b>
+        <b *ngIf="cronoCT2">{{totalCT2}}</b></ion-textarea>
     </ion-col>
   </ion-row>
+
+<ion-row class="ion-text-center" *ngIf="!cronoCD2 || !cronoCT2">
+  <ion-col size="6">
+  </ion-col>
+  <ion-col size="3" style="border: solid 1px black; background-color: rgb(211, 203, 203);">
+    <button style="background-color: rgb(211, 203, 203);" (click)="iniciarDetenerClichesD2()"><b>Iniciar/Finalizar</b></button>
+  </ion-col>
+  <ion-col size="3" style="border: solid 1px black; background-color: rgb(211, 203, 203);">
+    <button style="background-color: rgb(211, 203, 203);" (click)="iniciarDetenerClichesT2()"><b>Iniciar/Finalizar</b></button>
+  </ion-col>
+</ion-row>
 </div>
 <br>
 <b style="margin-left: 20px; margin-right: 20px;">VºBº IMPRESO POR:</b>
 <div style="margin-left: 20px; margin-right: 20px;">
   <ion-row>
-    <ion-col size="4.5" style="background-color: rgb(76, 167, 136); max-height: 40px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-      <ion-textarea></ion-textarea>
+    <ion-col size="4.5" style="background-color: rgb(76, 167, 136); max-height: 40px; min-height: 40px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+      <ion-textarea disabled="true" *ngIf="!tabbar">{{operador.username}}</ion-textarea>
     </ion-col>
     <ion-col size="1" style="background-color: rgb(76, 167, 136);">
-      <ion-checkbox></ion-checkbox>
-    </ion-col>
-<hr>
-<ion-col size="4.5" style="background-color: rgb(76, 167, 136); max-height: 40px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-  <ion-textarea></ion-textarea>
-</ion-col>
-<ion-col size="1" style="background-color: rgb(76, 167, 136);">
-  <ion-checkbox></ion-checkbox>
-</ion-col>
-  </ion-row>
-  <ion-row>
-    <ion-col size="5.5" style="background-color: rgb(97, 212, 174); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-      <ion-textarea></ion-textarea>
-    </ion-col>
-<hr>
-    <ion-col size="5.5" style="background-color: rgb(97, 212, 174); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-      <ion-textarea></ion-textarea>
+      <ion-checkbox [(ngModel)]="operarioImpre" (ionChange)="checkboxOperario()"></ion-checkbox>
     </ion-col>
   </ion-row>
 </div>
-<br>
-<div style="margin-left: 20px; margin-right: 20px;">
-  <ion-row>
-    <ion-col size="4.5" style="background-color: rgb(76, 167, 136); max-height: 40px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-      <ion-textarea></ion-textarea>
-    </ion-col>
-    <ion-col size="1" style="background-color: rgb(76, 167, 136);">
-      <ion-checkbox></ion-checkbox>
-    </ion-col>
-  <hr>
-  <ion-col size="4.5" style="background-color: rgb(76, 167, 136); max-height: 40px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-    <ion-textarea></ion-textarea>
-  </ion-col>
-  <ion-col size="1" style="background-color: rgb(76, 167, 136);">
-    <ion-checkbox></ion-checkbox>
-  </ion-col>
-  </ion-row>
-  <ion-row>
-    <ion-col size="5.5" style="background-color: rgb(97, 212, 174); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-      <ion-textarea></ion-textarea>
-    </ion-col>
-  <hr>
-    <ion-col size="5.5" style="background-color: rgb(97, 212, 174); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-      <ion-textarea></ion-textarea>
-    </ion-col>
-  </ion-row>
-</div>
-
 </ion-content>
 
                                                   <!-- CONTROL DE CALIDAD DE FABRICACION -->
@@ -1430,7 +1431,7 @@
   </ion-row>
   <ion-row class="ion-text-center" style="margin-right: 20px;margin-left: 20px" *ngFor="let item of materiales; let i = index">
     <ion-col style="border: solid 1px black; max-height: 35px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-top: none; border-right: none;">
-      <ion-textarea></ion-textarea>
+      <ion-textarea disabled="true"></ion-textarea>
     </ion-col>
     <ion-col size="5" style="border: solid 1px black; max-height: 35px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-top: none; border-right: none;">
       <b>{{item.Material}}</b>
@@ -1459,16 +1460,18 @@
 </ion-row>
 <ion-row class="ion-text-center" style="margin-right: 20px;margin-left: 20px" *ngFor="let item of materiales; let i = index">
   <ion-col style="border: solid 1px black; max-height: 35px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-top: none; border-right: none;">
-    <ion-textarea></ion-textarea>
+    <ion-button class="full-button" (click)="actualizarBobina(i)" fill="clear" shape="round">
+      Actualizar
+    </ion-button>
   </ion-col>
   <ion-col size="5" style="border: solid 1px black; max-height: 35px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-top: none; border-right: none;">
     <b>{{item.Material}}</b>
   </ion-col>
   <ion-col style="border: solid 1px black; max-height: 35px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-top: none; border-right: none;">
-    <b>{{item.Ancho}}</b>
+    <ion-textarea [(ngModel)]="anchoBobina[i]"><b></b></ion-textarea>
   </ion-col>
   <ion-col style="border: solid 1px black; max-height: 35px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-top: none;">
-    <b>{{item.Largo}}</b>
+    <ion-textarea [(ngModel)]="largoBobina[i]"><b></b></ion-textarea>
   </ion-col>
 </ion-row>
 <br>
@@ -1486,8 +1489,6 @@
 <ion-footer>
 
   <ion-toolbar *ngIf="estado == 'OF' &&  !tabbar">
-      <ion-buttons slot="end" >
-        <ion-button fill="solid" color="secondary" (click)="goControlCalidad('COF')">Ir a Control de Calidad</ion-button></ion-buttons>
       <ion-buttons slot="start" *ngIf="colVisible && !stopB">
         <ion-button fill="solid" color="danger" (click)="finalizarBobina()">Finalizar Bobinado</ion-button></ion-buttons>
     <ion-buttons slot="start" *ngIf="!crono && orden.EstadoOF == 1 ">
@@ -1501,12 +1502,15 @@
   </ion-toolbar>
 
   <ion-toolbar *ngIf="estado == 'COF' && !tabbar">
-      <ion-buttons slot="end" >
-        <ion-button fill="solid" color="secondary" (click)="goOrdenFabricacion('OF')">Ir a Orden de Fabricación</ion-button></ion-buttons>
         <ion-buttons slot="start" *ngIf="!validar">
           <ion-button fill="solid" color="primary" (click)="validaVerificacion()">Validar Verificacion</ion-button></ion-buttons>
       <ion-buttons slot="start" *ngIf="validar && !finCalidad">
         <ion-button fill="solid" color="danger" (click)="controlCalidad()">Terminar Control de Calidad</ion-button></ion-buttons>
+  </ion-toolbar>
+
+  <ion-toolbar *ngIf="estado == 'OI'">
+    <ion-buttons slot="start">
+      <ion-button fill="solid" color="primary" (click)="agregarOrdenImpresion()">Subir Orden Impresion</ion-button></ion-buttons>
   </ion-toolbar>
 
   <ion-toolbar *ngIf="estado == 'OL'">

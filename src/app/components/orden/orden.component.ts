@@ -1052,20 +1052,22 @@ finalizarLaminado(){
 
  this.maquinaService.setOrdenLaminacion(laminas).subscribe(resp=>{console.log('Laminacion Insertado')})
 
-  // this.endurecedor = '';
-  // this.resina = '';
-  // this.loteL = '';
-  // this.horasMaq = '';
-  // this.tipoA = '';
-  // this.anchoA = '';
-  // this.loteA = '';
-  // this.consumidoA = '';
-  // this.tipoB = '';
-  // this.anchoB = '';
-  // this.loteB = '';
-  // this.consumidoB = '';
-  // this.observacionesL = '';
-  // this.laminado='';
+  this.endurecedor = '';
+  this.resina = '';
+  this.loteL = '';
+  this.horasMaq = '';
+  this.tipoA = '';
+  this.anchoA = '';
+  this.loteA = '';
+  this.consumidoA = '';
+  this.tipoB = '';
+  this.anchoB = '';
+  this.loteB = '';
+  this.consumidoB = '';
+  this.observacionesL = '';
+  this.laminado='';
+  // this.horaH='';
+  // this.horaF='';
 
 
  this.horasL = 0;
@@ -1105,18 +1107,6 @@ this.ocultarBotonR=true
 this.cronoR=true
 }
 
-anchoBobina: string[] = [];
-largoBobina: string[] = [];
-actualizarBobina(index:number){
-  const ancho = this.anchoBobina[index];
-  const largo = this.largoBobina[index];
-
-  this.materiales[index].Ancho=ancho
-  this.materiales[index].Largo=largo
-
-  this.maquinaService.updateBobina(this.materiales[index]).subscribe(resp=>{console.log('TiempoMontaje insertado.')})
-}
-
 
 finalizarRebobinado(){
   this.totalR = this.sumarTiempo(this.totalR, this.horasR, this.minutosR, this.segundosR);
@@ -1130,8 +1120,6 @@ finalizarRebobinado(){
     TiempoInvertido: this.totalR,
     Observaciones:this.observacionesR
   }
-
-
  this.maquinaService.setOrdenRebobinado(rebobinado).subscribe(resp=>{console.log('Rebobinado Insertado')})
 
  this.observacionesR='';
@@ -1649,7 +1637,7 @@ const impresion={
   TiempoTotalImpresionTrasera: this.totalIT,
   TiempoTotalDesmontajeClichesDelantera: this.totalCD2,
   TiempoTotalDesmontajeClichesTrasera: this.totalCT2,
-  OperarioImpresion: this.operarioImpre
+  OperarioImpresion: this.operarioImpre2
 }
 
 this.maquinaService.setOrdenImpresion(impresion).subscribe(resp=>{console.log('Orden de Impresion insertado.')})

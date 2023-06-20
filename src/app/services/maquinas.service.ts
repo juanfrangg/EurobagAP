@@ -79,10 +79,6 @@ export class MaquinasService {
  
   }
 
-  updateBobina(bobina:any){
-    return this.http.post('http://192.168.0.156:8000/api/bobina', bobina)
-  }
-
   updateMaterialOF(montaje:any){
     return this.http.post('http://192.168.0.156:8000/api/material', montaje)
     .pipe(

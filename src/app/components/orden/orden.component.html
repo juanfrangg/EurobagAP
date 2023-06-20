@@ -9,7 +9,7 @@
       </ion-button>
     </ion-buttons>
 
-    <ion-tab-bar>
+    <ion-tab-bar *ngIf="tabbar">
       <ion-tab-button style="border: solid 1px black" (click)="cambiarEstado('OF')">
         <b style="font-size: 200%; color: blue" *ngIf="estado == 'OF'">Orden de fabricación</b>
         <b style="font-size: 200%; color: grey" *ngIf="estado != 'OF'">Orden de fabricación</b>
@@ -881,6 +881,18 @@
     </ion-col>
   </ion-row>
 </div>
+<br>
+<div style="margin-left: 20px; margin-right: 20px;">
+  <ion-row>
+    <ion-col size="4.5" style="background-color: rgb(76, 167, 136); max-height: 40px; min-height: 40px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+      <ion-textarea disables="true">{{operador.username}}</ion-textarea>
+    </ion-col>
+    <ion-col size="1" style="background-color: rgb(76, 167, 136);">
+      <ion-checkbox [(ngModel)]="operarioImpre2" (ionChange)="checkboxOperario2()"></ion-checkbox>
+    </ion-col>
+  </ion-row>
+</div>
+
 </ion-content>
 
                                                   <!-- CONTROL DE CALIDAD DE FABRICACION -->
@@ -1431,7 +1443,7 @@
   </ion-row>
   <ion-row class="ion-text-center" style="margin-right: 20px;margin-left: 20px" *ngFor="let item of materiales; let i = index">
     <ion-col style="border: solid 1px black; max-height: 35px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-top: none; border-right: none;">
-      <ion-textarea disabled="true"></ion-textarea>
+      <ion-textarea></ion-textarea>
     </ion-col>
     <ion-col size="5" style="border: solid 1px black; max-height: 35px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-top: none; border-right: none;">
       <b>{{item.Material}}</b>
@@ -1460,18 +1472,16 @@
 </ion-row>
 <ion-row class="ion-text-center" style="margin-right: 20px;margin-left: 20px" *ngFor="let item of materiales; let i = index">
   <ion-col style="border: solid 1px black; max-height: 35px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-top: none; border-right: none;">
-    <ion-button class="full-button" (click)="actualizarBobina(i)" fill="clear" shape="round">
-      Actualizar22
-    </ion-button>
+    <ion-textarea></ion-textarea>
   </ion-col>
   <ion-col size="5" style="border: solid 1px black; max-height: 35px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-top: none; border-right: none;">
     <b>{{item.Material}}</b>
   </ion-col>
   <ion-col style="border: solid 1px black; max-height: 35px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-top: none; border-right: none;">
-    <ion-textarea [(ngModel)]="anchoBobina[i]"><b></b></ion-textarea>
+    <b>{{item.Ancho}}</b>
   </ion-col>
   <ion-col style="border: solid 1px black; max-height: 35px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-top: none;">
-    <ion-textarea [(ngModel)]="largoBobina[i]"><b></b></ion-textarea>
+    <b>{{item.Largo}}</b>
   </ion-col>
 </ion-row>
 <br>
@@ -1489,6 +1499,8 @@
 <ion-footer>
 
   <ion-toolbar *ngIf="estado == 'OF' &&  !tabbar">
+      <ion-buttons slot="end" >
+        <ion-button fill="solid" color="secondary" (click)="goControlCalidad('COF')">Ir a Control de Calidad</ion-button></ion-buttons>
       <ion-buttons slot="start" *ngIf="colVisible && !stopB">
         <ion-button fill="solid" color="danger" (click)="finalizarBobina()">Finalizar Bobinado</ion-button></ion-buttons>
     <ion-buttons slot="start" *ngIf="!crono && orden.EstadoOF == 1 ">
@@ -1502,6 +1514,8 @@
   </ion-toolbar>
 
   <ion-toolbar *ngIf="estado == 'COF' && !tabbar">
+      <ion-buttons slot="end" >
+        <ion-button fill="solid" color="secondary" (click)="goOrdenFabricacion('OF')">Ir a Orden de Fabricación</ion-button></ion-buttons>
         <ion-buttons slot="start" *ngIf="!validar">
           <ion-button fill="solid" color="primary" (click)="validaVerificacion()">Validar Verificacion</ion-button></ion-buttons>
       <ion-buttons slot="start" *ngIf="validar && !finCalidad">
@@ -1510,7 +1524,7 @@
 
   <ion-toolbar *ngIf="estado == 'OI'">
     <ion-buttons slot="start">
-      <ion-button fill="solid" color="primary" (click)="agregarOrdenImpresion()">Subir Orden Impresion</ion-button></ion-buttons>
+      <ion-button fill="solid" color="primary" (click)="agregarOrdenImpresion()">TEST</ion-button></ion-buttons>
   </ion-toolbar>
 
   <ion-toolbar *ngIf="estado == 'OL'">

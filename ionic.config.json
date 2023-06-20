@@ -1,0 +1,7 @@
+{
+  "name": "EurobagApp",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular"
+}

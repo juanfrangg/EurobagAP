@@ -1,0 +1,48 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Inicio</ion-title>
+
+    <ion-buttons slot="end" (click)="cerrarSesion()">
+      <small style="color:red">Cerrar Sesión</small>
+      <ion-button>
+        <ion-icon color="danger" name="power"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+
+  <ion-item>
+    <ion-label>Selecciona una máquina</ion-label>
+    <ion-select placeholder="Elige una máquina" (ionChange)="onMaquinaSelec($event)">
+      <ion-select-option *ngFor="let item of maquina" [value]="item.CodigoMaquina">
+        {{ item.CodigoMaquina }}
+      </ion-select-option>
+    </ion-select>
+  </ion-item>
+  
+  <ion-item>
+    <ion-label (ionChange)="onMaquinaSelec($event)" class="fase">{{descripcion}}</ion-label>
+  </ion-item>
+  
+   <ion-item>
+    <ion-col><b>FECHA</b></ion-col>
+    <ion-col><b>ARTÍCULO</b></ion-col>
+    <ion-col><b>OBSERVACIÓN</b></ion-col>
+    <ion-col><b>CANTIDAD</b></ion-col>
+    <ion-col><b>CLIENTE</b></ion-col>
+    <ion-col><b>Nº PEDIDO</b></ion-col>
+  </ion-item>
+
+  <ion-item *ngFor="let orden of ordenesFase" (click)="abrirOrden(orden)">
+    <ion-col>{{orden.articulos[0].fecha}}</ion-col>
+    <ion-col>{{orden.articulos[0].DescripcionArticulo}}</ion-col>
+    <ion-col>{{orden.articulos[0].Descripcion2Articulo}}</ion-col>
+    <ion-col>{{orden.articulos[0].Unidades}}</ion-col>
+    <ion-col>{{orden.articulos[0].cliente}}</ion-col>
+    <ion-col>{{orden.articulos[0].NumeroOF}}</ion-col>
+  </ion-item>
+
+
+</ion-content>

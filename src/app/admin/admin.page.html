@@ -1,0 +1,44 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Ordenes de fabricación pendientes</ion-title>
+
+    <ion-buttons slot="end" (click)="cerrarSesion()">
+      <small style="color:red" (click)="cerrarSesion()">Cerrar Sesión</small>
+      <ion-button>
+        <ion-icon color="danger" name="power"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-item>
+    <ion-col><b>FECHA</b></ion-col>
+    <ion-col><b>ARTÍCULO</b></ion-col>
+    <ion-col><b>OBSERVACIÓN</b></ion-col>
+    <ion-col><b>CANTIDAD</b></ion-col>
+    <ion-col><b>CLIENTE</b></ion-col>
+    <ion-col><b>Nº PEDIDO</b></ion-col>
+    <ion-col><b>FASE</b></ion-col>
+  </ion-item>
+
+  <ion-item *ngFor="let orden of ordenesMostrar" (click)="abrirOrden(orden)">
+    <ion-col>{{orden.fecha}}</ion-col>
+    <ion-col>{{orden.DescripcionArticulo}}</ion-col>
+    <ion-col>{{orden.Descripcion2Articulo}}</ion-col>
+    <ion-col>{{orden.Unidades}}</ion-col>
+    <ion-col>{{orden.cliente}}</ion-col>
+    <ion-col>{{orden.NumeroOF}}</ion-col>
+    <ion-col>{{orden.fase}}</ion-col>
+  </ion-item>
+
+  <ion-tabs>
+    <ion-tab-bar>
+      <ion-tab-button *ngFor="let item of lista" style="border: solid 1px black" (click)="cambiarLista(item.micraje)">
+        <b style="font-size: 200%; color: blue" *ngIf="micrajeActivo == item.micraje">{{item.micraje}}</b>
+        <b style="font-size: 200%; color: grey" *ngIf="micrajeActivo != item.micraje">{{item.micraje}}</b>
+      </ion-tab-button>
+    </ion-tab-bar>
+  </ion-tabs>
+
+</ion-content>

@@ -1,0 +1,34 @@
+<ion-content>
+
+  <div class="card-container">
+    <ion-card>
+      <ion-img src="/assets/logo.png" alt="Eurobag Logo"></ion-img>
+      <ion-card-title style="text-align: center">
+        Acceso
+      </ion-card-title>
+      <ion-card-content>
+        <ion-row>
+          Email:
+        </ion-row>
+        <ion-row>
+          <ion-input [(ngModel)]="user" style="border: skyblue solid 0.5px" (keyup.enter)="login()"></ion-input>
+        </ion-row>
+        <ion-row>
+          Contraseña:
+        </ion-row>
+        <ion-row>
+          <ion-input [(ngModel)]="pwd" type="password" style="border: skyblue solid 0.5px" (keyup.enter)="login()"></ion-input>
+        </ion-row>
+        <ion-row>
+          <ion-button type="submit" (click)="login()">
+            Acceder
+          </ion-button>
+        </ion-row>
+        <ion-row>
+          <label *ngIf="!check" style="color:red">Email/Contraseña incorrectos</label>
+        </ion-row>
+      </ion-card-content>
+    </ion-card>
+  </div>
+
+</ion-content>

@@ -1,14 +1,83 @@
 <ion-header>
   <ion-toolbar>
     <ion-title>
-      CÓDIGOS
+      VERIFICACIONES
     </ion-title>
-    <ion-buttons slot="end">
+    <!-- <ion-buttons slot="end">
       <ion-button (click)="cerrarModal()">Cerrar</ion-button>
-    </ion-buttons>
+    </ion-buttons> -->
   </ion-toolbar>
 </ion-header>
 
 <ion-content>
-
+  <ion-row style="margin-right: 20px;margin-left: 20px;margin-top: 20px;">
+    <ion-col>
+      Máquina asignada adecuada
+    </ion-col>
+    <ion-checkbox [(ngModel)]="Comp1" ></ion-checkbox>
+    <ion-col></ion-col>
+    <ion-col>
+      Ojal, abrefácil y su ubicación
+    </ion-col>
+    <ion-checkbox [(ngModel)]="Comp2" ></ion-checkbox>
+  </ion-row>
+  <ion-row style="margin-right: 20px;margin-left: 20px">
+    <ion-col>
+      Material
+    </ion-col>
+    <ion-checkbox [(ngModel)]="Comp5"></ion-checkbox>
+    <ion-col></ion-col>
+    <ion-col>
+      Ver boceto de muestra
+    </ion-col>
+    <ion-checkbox [(ngModel)]="Comp6" ></ion-checkbox>
+  </ion-row>
+  <ion-row style="margin-right: 20px;margin-left: 20px">
+    <ion-col>
+      Ancho de la bobina*
+    </ion-col>
+      <ion-checkbox [(ngModel)]="Comp7"></ion-checkbox>
+      <ion-col></ion-col>
+    <ion-col>
+      Comprobar distancia a fondo
+    </ion-col>
+    <ion-checkbox [(ngModel)]="Comp8"></ion-checkbox>
+  </ion-row>
+  <ion-row style="margin-right: 20px;margin-left: 20px">
+    <ion-col>
+      Micraje de la bobina*
+    </ion-col>
+    <ion-checkbox [(ngModel)]="Comp9" ></ion-checkbox>
+    <ion-col></ion-col>
+    <ion-col>
+      Número de bolsas por ancho
+    </ion-col>
+    <ion-checkbox [(ngModel)]="Comp11"></ion-checkbox>
+  </ion-row>
+  <ion-row style="margin-right: 20px;margin-left: 20px">
+    <ion-col>
+      Metro lineales asignados correctos
+    </ion-col>
+    <ion-checkbox [(ngModel)]="Comp13"></ion-checkbox>
+    <ion-col></ion-col>
+    <ion-col>
+      Etiquetas
+    </ion-col>
+    <ion-checkbox [(ngModel)]="Comp14" ></ion-checkbox>
+  </ion-row>
+  <ion-row style="margin-right: 20px;margin-left: 20px">
+    <ion-col size="3.6">
+      Donde se realizan las soldaduras
+    </ion-col>
+    <ion-checkbox [(ngModel)]="Comp4"></ion-checkbox>
+    <ion-col></ion-col>
+    <ion-col></ion-col>
+  </ion-row>
+  <ion-row>
+    <ion-col size="12">
+      <ion-button (click)="validarBobi()" expand="block" shape="round">
+       Completar Verificaciones
+      </ion-button>
+    </ion-col>
+  </ion-row>
 </ion-content>

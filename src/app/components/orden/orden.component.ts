@@ -8,7 +8,9 @@ import { AlertController } from '@ionic/angular';
 import { MostrarComponent } from '../mostrar/mostrar.component';
 import { Storage } from '@ionic/storage-angular';
 import { Subscription } from 'rxjs';
-import { AnyARecord } from 'dns';
+import { TimermodalComponent } from '../timermodal/timermodal.component';
+
+
 
 
 @Component({
@@ -31,7 +33,7 @@ export class OrdenComponent implements OnInit, OnDestroy {
   cantidad: number = 0
   totalLargo:number = 0
 
-
+  colorFondo:string='white'
   horas: number = 0;
   minutos: number = 0;
   segundos: number = 0;
@@ -39,7 +41,7 @@ export class OrdenComponent implements OnInit, OnDestroy {
   fecha: any
   inicioH: any
   finH: any
-  totalT: any='00:00:00'
+  totalT: any='00:00:00';
   motivoPausa: any
   crono: boolean=false
   cronoB: boolean=false
@@ -49,13 +51,15 @@ export class OrdenComponent implements OnInit, OnDestroy {
   intervalB: any;
   pausaB:boolean=false
   stopB:boolean=false
-  totalB: any='00:00:00'
+  totalB: any='00:00:00';
+  totalMontaje :any
   operador: any
   maquina: any
   ocultarBoton: boolean=false
   tabbar: boolean=false
   colVisible: boolean=false
   insertado:boolean=false
+  calidad:boolean=false
   horaPausa:any
   qty:number=1
   codigoStorage:string='8778'
@@ -72,21 +76,20 @@ export class OrdenComponent implements OnInit, OnDestroy {
   totalCajas:any;
   lote:any;
   nCajas:any;
+  partidaOF:string[] = [];
+  colorFondoBobi:string='white'
 
 
   validar:boolean=false
   Comp1:boolean=false;numericValue1=0;
   Comp2:boolean=false;numericValue2=0;
-  Comp3:boolean=false;numericValue3=0;
   Comp4:boolean=false;numericValue4=0;
   Comp5:boolean=false;numericValue5=0;
   Comp6:boolean=false;numericValue6=0;
   Comp7:boolean=false;numericValue7=0;
   Comp8:boolean=false;numericValue8=0;
   Comp9:boolean=false;numericValue9=0;
-  Comp10:boolean=false;numericValue10=0;
   Comp11:boolean=false;numericValue11=0;
-  Comp12:boolean=false;numericValue12=0;
   Comp13:boolean=false;numericValue13=0;
   Comp14:boolean=false;numericValue14=0;
   Comp15:boolean=false;numericValue15=0;
@@ -125,7 +128,7 @@ export class OrdenComponent implements OnInit, OnDestroy {
   roturas: any[]=[];
 
   finCalidad:boolean=false
-
+  todosoperarios: any[]=[]
   suscription:Subscription | any
 
 
@@ -144,6 +147,9 @@ export class OrdenComponent implements OnInit, OnDestroy {
     this.operador=await this.session.getSession()
     this.maquina=await this.session.getMaquina()
  
+    this.maquinaService.getOperario().subscribe((data:any) => {
+      this.todosoperarios.push(data);
+    });
 
     this.mostrarBobina()
 
@@ -249,7 +255,26 @@ export class OrdenComponent implements OnInit, OnDestroy {
 
   }
 
-  pausarBobina() {
+  async operarioExtra(){
+    const select: HTMLIonSelectElement|any = document.querySelector('#operarioext');
+    select.open();
+  }
+
+  selectChange(event: any) {
+    console.log('Opción seleccionada:', event.detail.value);
+
+    const opextra:any={
+      EjercicioOF: this.orden.EjercicioOF,
+      SerieOF: this.orden.SerieOF,
+      NumeroOF: this.orden.NumeroOF,
+      OperarioExtra: event.detail.value
+    }
+
+  this.maquinaService.updateOperarioExtra(opextra).subscribe(resp=>{console.log('Operario Extra insertado.')})
+  }
+
+  pausarOrden() {
+    this.colorFondo='white';
     this.pausaB = true;
     this.cronoB=false
   }
@@ -266,9 +291,10 @@ export class OrdenComponent implements OnInit, OnDestroy {
     });
   }
 
-  iniciarDetenerBobina(index:number){
+  async iniciarDetenerBobina(){
 
     if(!this.intervalB ){
+      this.colorFondoBobi='rgb(97, 207, 111)';
       this.intervalB = setInterval(() => {
         if(!this.pausaB){
         this.segundosB++;
@@ -282,54 +308,58 @@ export class OrdenComponent implements OnInit, OnDestroy {
         }
       }
       }, 1000);
-      
+      const modals = await this.modalController.create({
+        component: TimermodalComponent,
+        cssClass: 'modalOF',
+        componentProps: { },
+        backdropDismiss: false
+      });
+      modals.onDidDismiss().then((result) => {
+  });
+      await modals.present();
     }else{
+      this.colorFondoBobi='white'
 
+      this.totalB = this.sumarTiempo(this.totalB, this.horasB, this.minutosB, this.segundosB);
 
-    this.totalB =(this.agregarCerosIzquierda(this.horasB)+':'+this.agregarCerosIzquierda(this.minutosB)+':'+this.agregarCerosIzquierda(this.segundosB))
+      const tiempo:any={
+        EjercicioOF: this.orden.EjercicioOF,
+        SerieOF: this.orden.SerieOF,
+        NumeroOF: this.orden.NumeroOF,
+        TiempoMontaje: this.totalB
+      }
 
-    this.materiales[index].TiempoMontaje=this.totalB
-
-    this.maquinaService.updateMaterialOF(this.materiales[index]).subscribe(resp=>{console.log('TiempoMontaje insertado.')})
-
+    this.maquinaService.updateBobinaTM(tiempo).subscribe(resp=>{console.log('Tiempo de Montaje insertado.')})
+    
     clearInterval(this.intervalB);
     this.intervalB = null;
     this.horasB = 0;
     this.minutosB = 0;
     this.segundosB = 0;
     this.cronoB=false
+
     }
+
   }
 
   finalizarBobina() {
+
     this.stopB=true
    
   }
   
-  // reiniciarBobina() {
-  //   this.pausaB = false;
-  //   this.horasB = 0;
-  //   this.minutosB = 0;
-  //   this.segundosB = 0;
-  // }
-
   async mostrarCod(){
-    const modal = await this.modalController.create({
-      component: MostrarComponent,
-      componentProps: {
-        // Puedes pasar propiedades adicionales al componente modal si es necesario
-      }
-    });
-  
-    await modal.present();
+
   }
 
   iniciarCronometro() {
-
+    this.colorFondo='rgb(97, 207, 111)';
     this.pausaB = false;
     this.colVisible=true;
 
 if(!this.insertado){
+  this.goOrdenFabricacion('COF');
+ 
     const fechaActual = new Date();
     const dia = fechaActual.getDate();
     const mes = fechaActual.getMonth() + 1;
@@ -390,6 +420,10 @@ if(!this.insertado){
     });
     });
 
+    this.storage.set('codigMant', this.codigoStorage);
+    const codMan=await this.storage.get('codigMant')
+    this.codmanteni=codMan
+
     const alert = await this.alertController.create({
       header: 'Seleccionar opción',
       backdropDismiss: false,
@@ -400,6 +434,18 @@ if(!this.insertado){
           label: 'Ir al aseo',
           value: 'Aseo',
           checked: true
+        },
+        {
+          name: 'opcion',
+          type: 'radio',
+          label: 'Comida',
+          value: 'Comida'
+        },
+        {
+          name: 'opcion',
+          type: 'radio',
+          label: 'Revision de Bolsas',
+          value: 'Revision de Bolsas'
         },
         {
           name: 'opcion',
@@ -428,8 +474,129 @@ if(!this.insertado){
         {
           text: 'Aceptar',
           handler:async (data) => {
-            this.pausarBobina()
-            if (data === 'otros') {
+
+            if(data === 'Revision de Bolsas'){
+              console.log('pausa BOLSAS')
+              let intervalP:any;
+              if(!intervalP){
+                  intervalP = setInterval(() => {
+                  this.segundosP++;
+                  if (this.segundosP === 60) {
+                    this.segundosP = 0;
+                    this.minutosP++;
+                    if (this.minutosP === 60) {
+                      this.minutosP = 0;
+                      this.horasP++;
+                    }
+                  }
+                
+                }, 1000);
+                
+              }
+              const alert = await this.alertController.create({
+                header: 'Revisión de Bolsas',
+                subHeader: 'Acepte cuando haya revisado las bolsas.',
+                backdropDismiss: false,
+                buttons: [
+                  {
+                    text: 'Aceptar',
+                    handler: (data) => {
+
+                      this.motivoPausa='Revision de Bolsas'
+                      this.totalP =(this.agregarCerosIzquierda(this.horasP)+':'+this.agregarCerosIzquierda(this.minutosP)+':'+this.agregarCerosIzquierda(this.segundosP))
+
+                      const pausaOF:any={
+                        EjercicioOF: this.orden.EjercicioOF,
+                        SerieOF: this.orden.SerieOF,
+                        NumeroOF: this.orden.NumeroOF,
+                        Operario: this.operador.CodigoEmpleado,
+                        HoraInicio:this.horaPausa,
+                        QtyPausa:this.qty,
+                        MotivoPausa:this.motivoPausa,
+                        TiempoPausa:this.totalP
+                      }
+                      this.maquinaService.setPausa(pausaOF).subscribe(resp=>{console.log('Pausa Insertada')})
+                      this.qty++;
+
+                      this.horasP = 0;
+                      this.minutosP = 0;
+                      this.segundosP = 0;
+                  
+                      clearInterval(intervalP);
+                    }
+                  }
+                ]
+              });
+          
+              await alert.present();
+              
+            }
+            else if(data === 'Cambio de Bobina'){
+              console.log('pausa BOBINA')
+              let intervalP:any;
+              if(!intervalP){
+                  intervalP = setInterval(() => {
+                  this.segundosP++;
+                  if (this.segundosP === 60) {
+                    this.segundosP = 0;
+                    this.minutosP++;
+                    if (this.minutosP === 60) {
+                      this.minutosP = 0;
+                      this.horasP++;
+                    }
+                  }
+                
+                }, 1000);
+                
+              }
+              const modal = await this.modalController.create({
+                component: MostrarComponent,
+                componentProps: {                },
+                backdropDismiss: false
+              });
+              modal.onDidDismiss().then((result) => {
+
+                if (result && result.data) {
+                  
+                  this.motivoPausa='Cambio de Bobina'
+                  this.totalP =(this.agregarCerosIzquierda(this.horasP)+':'+this.agregarCerosIzquierda(this.minutosP)+':'+this.agregarCerosIzquierda(this.segundosP))
+
+                  const pausaOF:any={
+                    EjercicioOF: this.orden.EjercicioOF,
+                    SerieOF: this.orden.SerieOF,
+                    NumeroOF: this.orden.NumeroOF,
+                    Operario: this.operador.CodigoEmpleado,
+                    HoraInicio:this.horaPausa,
+                    QtyPausa:this.qty,
+                    MotivoPausa:this.motivoPausa,
+                    TiempoPausa:this.totalP
+                  }
+                  this.maquinaService.setPausa(pausaOF).subscribe(resp=>{console.log('Pausa Bobina Insertada')})
+                  this.qty++;  
+
+                  this.horasP = 0;
+                  this.minutosP = 0;
+                  this.segundosP = 0;
+              
+                  clearInterval(intervalP);
+                }
+                
+              });
+              await modal.present();
+            
+            }
+            else if (data === 'otros') {
+           
+              console.log('pausa OTROS')
+              this.pausarOrden()
+              this.totalT = this.sumarTiempo(this.totalT, this.horas, this.minutos, this.segundos);
+
+              this.horas = 0;
+              this.minutos = 0;
+              this.segundos = 0;
+              this.crono=false
+          
+              clearInterval(this.interval);
               const alert = await this.alertController.create({
                 header: 'Ingresa una opción',
                 backdropDismiss: false,
@@ -464,6 +631,7 @@ if(!this.insertado){
                       }
                       this.maquinaService.setPausa(pausaOF).subscribe(resp=>{console.log('Pausa Insertada')})
                       this.qty++;
+
                     }
                   }
                 ]
@@ -472,7 +640,18 @@ if(!this.insertado){
               await alert.present();
               
             }
-            if (data === 'Mantenimiento') {
+           else if (data === 'Mantenimiento') {
+           
+            console.log('pausa Mantenimiento')
+            this.pausarOrden()
+            this.totalT = this.sumarTiempo(this.totalT, this.horas, this.minutos, this.segundos);
+
+            this.horas = 0;
+            this.minutos = 0;
+            this.segundos = 0;
+            this.crono=false
+        
+            clearInterval(this.interval);
               let intervalP:any;
               if(!intervalP){
                   intervalP = setInterval(() => {
@@ -489,13 +668,7 @@ if(!this.insertado){
                 }, 1000);
                 
               }
-              
-           //   this.totalP = this.sumarTiempo(this.totalP,this.horasP, this.minutosP, this.segundosP);
 
-              this.storage.set('codigMant', this.codigoStorage);
-              const codMan=await this.storage.get('codigMant')
-              this.codmanteni=codMan
-              
               const showInputDialog = async () => {
                 const alert = await this.alertController.create({
                   header: 'Avisar ha mantenimiento',
@@ -536,9 +709,9 @@ if(!this.insertado){
 
                             this.horasP = 0;
                             this.minutosP = 0;
-                            this.segundosP = 0;
-                        
+                            this.segundosP = 0;                        
                             clearInterval(intervalP);
+
                           } else {
                             showInputDialog();
                           }
@@ -555,6 +728,11 @@ if(!this.insertado){
               await alert.present();
               
             } else {
+             
+              console.log('pausa ELSE')
+              this.pausarOrden()
+              let conditionPause=false
+            
               this.motivoPausa=data
 
               const pausaOF:any={
@@ -568,17 +746,19 @@ if(!this.insertado){
               }
               this.maquinaService.setPausa(pausaOF).subscribe(resp=>{console.log('Pausa Insertada')})
               this.qty++;
-           
+
+// ESTE totalT REPLICARLO EN LA SOPCIONES QUE AÑADE EL TRAMO AL TOTAL DE LA OF
+              this.totalT = this.sumarTiempo(this.totalT, this.horas, this.minutos, this.segundos);
+
+              this.horas = 0;
+              this.minutos = 0;
+              this.segundos = 0;
+              this.crono=false
+          
+              clearInterval(this.interval);
             }
 
-            this.totalT = this.sumarTiempo(this.totalT, this.horas, this.minutos, this.segundos);
 
-                this.horas = 0;
-                this.minutos = 0;
-                this.segundos = 0;
-                this.crono=false
-            
-                clearInterval(this.interval);
           }
         }
       ]
@@ -628,11 +808,11 @@ if(!this.insertado){
   NumeroCajas: this.nCajas
  }
 
-
+ this.colorFondo='white';
  
- this.maquinaService.setBolsasOF(bolsas).subscribe(resp=>{console.log('BolsasOF Insertadas')})
-   this.maquinaService.updateOperarios(timerOF).subscribe(resp=>{console.log('Operacion actualizada')})
-   this.maquinaService.updateFasesOF(activoOF).subscribe(resp=>{console.log('Activo pasado a 0')})
+  this.maquinaService.setBolsasOF(bolsas).subscribe(resp=>{console.log('BolsasOF Insertadas')})
+  this.maquinaService.updateOperarios(timerOF).subscribe(resp=>{console.log('Operacion actualizada')})
+  this.maquinaService.updateFasesOF(activoOF).subscribe(resp=>{console.log('Activo pasado a 0')})
 
    const alert = await this.alertController.create({
     header: 'Ha finalizado la Operación de Fabricación',
@@ -651,7 +831,7 @@ if(!this.insertado){
     clearInterval(this.interval);
     this.ocultarBoton = true;
     this.crono=false
-
+    this.calidad=true;
 
   }
 
@@ -678,11 +858,23 @@ if(!this.insertado){
 
   return `${this.agregarCerosIzquierda(horasTotales)}:${this.agregarCerosIzquierda(minutosTotales)}:${this.agregarCerosIzquierda(segundosTotales)}`;
 }
-  
+
+modificarPartida(index:number) {
+  console.log(index)
+  this.materiales[index].Partida = this.partidaOF[index];
+  console.log(this.materiales[index])
+  this.maquinaService.updateBobina( this.materiales[index]).subscribe(resp => {console.log('Partida Modificada');});
+  this.partidaOF[index]=''
+  this.botonPartida = -1;
+}
+
+
+
+  // ------------------------------------CONTROL DE CALIDAD------------------------------------------- //
+
 async validaVerificacion(){
-if(this.Comp1==true && this.Comp2==true && this.Comp3==true && this.Comp4==true && this.Comp5==true && this.Comp6==true && 
-  this.Comp7==true && this.Comp8==true && this.Comp9==true && this.Comp10==true && this.Comp11==true && this.Comp12==true && 
-  this.Comp13==true && this.Comp14==true){
+if(this.Comp1==true && this.Comp2==true && this.Comp4==true && this.Comp5==true && this.Comp6==true && 
+  this.Comp7==true && this.Comp8==true && this.Comp9==true && this.Comp11==true && this.Comp13==true && this.Comp14==true){
     const alert = await this.alertController.create({
       header: 'VERIFICACIONES PREVIAS',
       message: 'Has completado todas las verificaciones',
@@ -698,7 +890,6 @@ if(this.Comp1==true && this.Comp2==true && this.Comp3==true && this.Comp4==true 
   
     await alert.present();
  
-
 }else{
   const alert = await this.alertController.create({
     header: 'VERIFICACIONES PREVIAS',
@@ -774,9 +965,131 @@ async agregarFila() {
   this.nuevasFilas.push(nuevaFila);
 
 }
+fechaFormateada:any
+fechaActual(){
+  const fecha = new Date();
 
-    
+  const dia = fecha.getDate();
+  const mes = fecha.getMonth() + 1;
+  const anio = fecha.getFullYear();
+  const horas = fecha.getHours();
+  const minutos = fecha.getMinutes();
+  const segundos = fecha.getSeconds();
 
+  const diaFormateado = dia.toString().padStart(2, '0');
+  const mesFormateado = mes.toString().padStart(2, '0');
+  const anioFormateado = anio.toString();
+  const horasFormateadas = horas.toString().padStart(2, '0');
+  const minutosFormateados = minutos.toString().padStart(2, '0');
+  const segundosFormateados = segundos.toString().padStart(2, '0');
+
+  this.fechaFormateada = `${anioFormateado}-${mesFormateado}-${diaFormateado} ${horasFormateadas}:${minutosFormateados}:${segundosFormateados}`;
+
+}
+
+mostrarDimension1 = false;
+checkboxDimension1 = false;
+toggleDimension1() {
+  this.mostrarDimension1 = this.checkboxDimension1;
+  this.fechaActual()
+  this.dimensionesBolsas1=this.fechaFormateada
+}
+
+mostrarDimension2 = false;
+checkboxDimension2 = false;  
+toggleDimension2() {
+  this.mostrarDimension2 = this.checkboxDimension2;
+  this.fechaActual()
+  this.dimensionesBolsas2=this.fechaFormateada
+}
+
+mostrarDimension3 = false;
+checkboxDimension3 = false;  
+toggleDimension3() {
+  this.mostrarDimension3 = this.checkboxDimension3;
+  this.fechaActual()
+  this.dimensionesBolsas3=this.fechaFormateada
+}
+
+mostrarDimension4 = false;
+checkboxDimension4 = false;  
+toggleDimension4() {
+  this.mostrarDimension4 = this.checkboxDimension4;
+  this.fechaActual()
+  this.dimensionesBolsas4=this.fechaFormateada
+}
+
+mostrarDimension5 = false;
+checkboxDimension5 = false;
+toggleDimension5() {
+  this.mostrarDimension5 = this.checkboxDimension5;
+  this.fechaActual()
+  this.dimensionesBolsas5=this.fechaFormateada
+}
+
+mostrarDimension6 = false;
+checkboxDimension6 = false;
+toggleDimension6() {
+  this.mostrarDimension6 = this.checkboxDimension6;
+  this.fechaActual()
+  this.dimensionesBolsas6=this.fechaFormateada
+}
+// ANCHO
+mostrarAncho1 = false;
+checkboxAncho1 = false; 
+toggleAncho1() {
+  this.mostrarAncho1 = this.checkboxAncho1;
+  this.fechaActual()
+  this.anchoSoldaduras1=this.fechaFormateada
+}
+
+mostrarAncho2 = false;
+checkboxAncho2 = false;  
+toggleAncho2() {
+  this.mostrarAncho2 = this.checkboxAncho2;
+  this.fechaActual()
+  this.anchoSoldaduras2=this.fechaFormateada
+}
+
+mostrarAncho3 = false;
+checkboxAncho3 = false;  
+toggleAncho3() {
+  this.mostrarAncho3 = this.checkboxAncho3;
+  this.fechaActual()
+  this.anchoSoldaduras3=this.fechaFormateada
+}
+
+mostrarAncho4 = false;
+checkboxAncho4 = false;  
+toggleAncho4() {
+  this.mostrarAncho4 = this.checkboxAncho4;
+  this.fechaActual()
+  this.anchoSoldaduras4=this.fechaFormateada
+}
+
+mostrarAncho5 = false;
+checkboxAncho5 = false;   
+toggleAncho5() {
+  this.mostrarAncho5 = this.checkboxAncho5;
+  this.fechaActual()
+  this.anchoSoldaduras5=this.fechaFormateada
+}
+
+mostrarAncho6 = false;
+checkboxAncho6 = false; 
+toggleAncho6() {
+  this.mostrarAncho6 = this.checkboxAncho6;
+  this.fechaActual()
+  this.anchoSoldaduras6=this.fechaFormateada
+}
+
+mostrarSombrero = false;
+checkboxSombrero = false;
+toggleSombrero() {
+  this.mostrarSombrero = this.checkboxSombrero;
+  this.fechaActual()
+  this.sombrero=this.fechaFormateada
+}
 async controlCalidad(){
   
   const alert = await this.alertController.create({
@@ -844,20 +1157,17 @@ const calidadFabricacion:any={
   NumeroOF: this.orden.NumeroOF,
   Fecha: this.fecha,
   Articulo: art.DescripcionArticulo,
-  Comp1: this.numericValue1,
-  Comp2: this.numericValue2,
-  Comp3: this.numericValue3,
-  Comp4: this.numericValue4,
-  Comp5: this.numericValue5,
-  Comp6: this.numericValue6,
-  Comp7: this.numericValue7,
-  Comp8: this.numericValue8,
-  Comp9: this.numericValue9,
-  Comp10: this.numericValue10,
-  Comp11: this.numericValue11,
-  Comp12: this.numericValue12,
-  Comp13: this.numericValue13,
-  Comp14: this.numericValue14,
+  Comp1: this.Comp1,
+  Comp2: this.Comp2,
+  Comp4: this.Comp4,
+  Comp5: this.Comp5,
+  Comp6: this.Comp6,
+  Comp7: this.Comp7,
+  Comp8: this.Comp8,
+  Comp9: this.Comp9,
+  Comp11: this.Comp11,
+  Comp13: this.Comp13,
+  Comp14: this.Comp14,
   Comp15: this.numericValue15,
   Comp16: this.numericValue16,
   Comp17: this.numericValue17,
@@ -899,7 +1209,6 @@ onCheckboxChange(event: any, compName: string, compValue: number) {
   // Actualizar el valor numérico correspondiente
   compValue = event.target.checked ? 0 : 1;
 
-  // Obtener el valor del artículo y realizar las operaciones necesarias
   this.ordenService.getArticulos(this.orden.EjercicioOF, this.orden.SerieOF, this.orden.NumeroOF).subscribe((resp: any) => {
     this.articulo = resp;
     this.articulo.forEach((art: any) => {
@@ -911,16 +1220,13 @@ onCheckboxChange(event: any, compName: string, compValue: number) {
         Articulo: art.DescripcionArticulo,
         Comp1: this.Comp1,
         Comp2: this.Comp2,
-        Comp3: this.Comp3,
         Comp4: this.Comp4,
         Comp5: this.Comp5,
         Comp6: this.Comp6,
         Comp7: this.Comp7,
         Comp8: this.Comp8,
         Comp9: this.Comp9,
-        Comp10: this.Comp10,
         Comp11: this.Comp11,
-        Comp12: this.Comp12,
         Comp13: this.Comp13,
         Comp14: this.Comp14,
         Comp15: this.Comp15,
@@ -930,27 +1236,26 @@ onCheckboxChange(event: any, compName: string, compValue: number) {
         Observaciones: this.observaciones,
         Operario: this.operador.CodigoEmpleado
       };
-
-      this.maquinaService.setControlCalidadFabricacion(calidadFabricacion).subscribe(resp => {'MODIFICADO'});
+      this.maquinaService.setControlCalidadFabricacion(calidadFabricacion).subscribe(resp => {console.log('MODIFICADO')});
     });
   });
 }
 
 
 onCheckboxChange15(event:any) {
-  this.numericValue15 = event.target.checked ? 0 : 1;
+  this.numericValue15 = event.target.checked ? 1 : 0;
 }
 
 onCheckboxChange16(event:any) {
-  this.numericValue16 = event.target.checked ? 0 : 1;
+  this.numericValue16 = event.target.checked ? 1 : 0; 
 }
 
 onCheckboxChange17(event:any) {
-  this.numericValue17 = event.target.checked ? 0 : 1;
+  this.numericValue17 = event.target.checked ? 1 : 0;
 }
 
 onCheckboxChange18(event:any) {
-  this.numericValue18 = event.target.checked ? 0 : 1;
+  this.numericValue18 = event.target.checked ? 1 : 0;
 }
 
 onCheckboxChangeEstanq(event:any) {
@@ -964,7 +1269,7 @@ onCheckboxChangeRetrac(event:any) {
 }
 
 
-                                                                      //ORDEN DE LAMINACION
+// ----------------------------------------------ORDEN DE LAMINACION------------------------------------ //
 cronoL: boolean=false
 ocultarBotonL: boolean=false
 horasL: number = 0;
@@ -1052,22 +1357,20 @@ finalizarLaminado(){
 
  this.maquinaService.setOrdenLaminacion(laminas).subscribe(resp=>{console.log('Laminacion Insertado')})
 
-  this.endurecedor = '';
-  this.resina = '';
-  this.loteL = '';
-  this.horasMaq = '';
-  this.tipoA = '';
-  this.anchoA = '';
-  this.loteA = '';
-  this.consumidoA = '';
-  this.tipoB = '';
-  this.anchoB = '';
-  this.loteB = '';
-  this.consumidoB = '';
-  this.observacionesL = '';
-  this.laminado='';
-  // this.horaH='';
-  // this.horaF='';
+  // this.endurecedor = '';
+  // this.resina = '';
+  // this.loteL = '';
+  // this.horasMaq = '';
+  // this.tipoA = '';
+  // this.anchoA = '';
+  // this.loteA = '';
+  // this.consumidoA = '';
+  // this.tipoB = '';
+  // this.anchoB = '';
+  // this.loteB = '';
+  // this.consumidoB = '';
+  // this.observacionesL = '';
+  // this.laminado='';
 
 
  this.horasL = 0;
@@ -1107,6 +1410,44 @@ this.ocultarBotonR=true
 this.cronoR=true
 }
 
+anchoBobina: string[] = [];
+largoBobina: string[] = [];
+actualizarBobina(index:number){
+
+  this.materiales[index].Ancho=this.anchoBobina[index]
+  this.materiales[index].Largo=this.largoBobina[index]
+
+  this.maquinaService.updateBobina(this.materiales[index]).subscribe(resp=>{console.log('Bobina Actualizada.')});
+
+  this.anchoBobina[index] = '';
+  this.largoBobina[index] = '';
+  this.botonBobina = -1;
+}
+
+botonBobina: number = -1;
+camposBobina: boolean = true;
+
+botonPartida: number = -1;
+camposPartida: boolean = true;
+
+verificarCamposVacios(index: number) {
+  this.camposBobina = true; 
+  if (this.anchoBobina[index] && this.largoBobina[index]) {
+    this.camposBobina = false;
+    this.botonBobina = index; // Establece el índice del botón activo
+  } else {
+    this.botonBobina = -1; // Si los campos están vacíos, establece el índice del botón activo a -1
+  }
+
+  this.camposPartida = true; 
+  if (this.partidaOF[index]) {
+    this.camposPartida = false;
+    this.botonPartida = index; // Establece el índice del botón activo
+  } else {
+    this.botonPartida = -1; // Si los campos están vacíos, establece el índice del botón activo a -1
+  }
+}
+
 
 finalizarRebobinado(){
   this.totalR = this.sumarTiempo(this.totalR, this.horasR, this.minutosR, this.segundosR);
@@ -1120,6 +1461,8 @@ finalizarRebobinado(){
     TiempoInvertido: this.totalR,
     Observaciones:this.observacionesR
   }
+
+
  this.maquinaService.setOrdenRebobinado(rebobinado).subscribe(resp=>{console.log('Rebobinado Insertado')})
 
  this.observacionesR='';
@@ -1637,10 +1980,64 @@ const impresion={
   TiempoTotalImpresionTrasera: this.totalIT,
   TiempoTotalDesmontajeClichesDelantera: this.totalCD2,
   TiempoTotalDesmontajeClichesTrasera: this.totalCT2,
-  OperarioImpresion: this.operarioImpre2
+  OperarioImpresion: this.operarioImpre
 }
 
 this.maquinaService.setOrdenImpresion(impresion).subscribe(resp=>{console.log('Orden de Impresion insertado.')})
+
+const tinta:any={
+  EjercicioOF: this.orden.EjercicioOF,
+  SerieOF: this.orden.SerieOF,
+  NumeroOF: this.orden.NumeroOF,
+  Nombre:this.nombreD,
+  LoteTinta:this.loteD,
+  Kg:this.kgD,
+  Anilox:this.aniloxD,
+  Posicion:this.posicionD,
+}
+
+this.maquinaService.setTintaImpresion(tinta).subscribe(resp=>{console.log('Cara Delantera insertado')})
+
+this.nombreD=''
+this.loteD=''
+this.kgD=''
+this.aniloxD=''
+this.posicionD++
+
+const tintas:any={
+  EjercicioOF: this.orden.EjercicioOF,
+  SerieOF: this.orden.SerieOF,
+  NumeroOF: this.orden.NumeroOF,
+  Nombre:this.nombreT,
+  LoteTinta:this.loteT,
+  Kg:this.kgT,
+  Anilox:this.aniloxT,
+  Posicion:this.posicionT,
+}
+
+this.maquinaService.setTintaImpresion(tintas).subscribe(resp=>{console.log('Cara Trasera insertado')})
+
+this.nombreT=''
+this.loteT=''
+this.kgT=''
+this.aniloxT=''
+this.posicionT++
+
+const panton:any={
+  NumeroPanton:this.numPanton,
+  EjercicioOF: this.orden.EjercicioOF,
+  SerieOF: this.orden.SerieOF,
+  NumeroOF: this.orden.NumeroOF,
+  Color:this.color,
+  Kg:this.kg,
+  LoteTinta:this.loteTinta
+}
+
+this.maquinaService.setDetallePanton(panton).subscribe(resp=>{console.log('Detalles de Pantón insertado')})
+
+this.color= '';
+this.kg= '';
+this.loteTinta= '';
 
 }
 

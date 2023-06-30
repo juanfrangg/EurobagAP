@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ModalController } from '@ionic/angular';
-import { Observable } from 'rxjs';
 import { OrdenComponent } from '../components/orden/orden.component';
 import { MaquinasService } from '../services/maquinas.service';
 import { OrdenesService } from '../services/ordenes.service';
@@ -245,5 +244,4 @@ async abrirOrden(orden: any){
   })
 }
 
-  
 }

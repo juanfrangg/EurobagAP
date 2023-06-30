@@ -18,6 +18,7 @@ export class AdminPage implements OnInit {
   fasesordenes: any;
   micrajeActivo: any
   etapas: any
+  totalOrdenes: any[] =[]
 
   constructor(private route: Router,
     private session: SessionService, 
@@ -32,6 +33,7 @@ export class AdminPage implements OnInit {
     this.session.getEtapas().then( async resp => {
       this.etapas = resp
     })
+    
   }
 
   async getOrdenes(resp : any){
@@ -51,6 +53,8 @@ export class AdminPage implements OnInit {
             this.ordenService.getPedidos(orden.EjercicioOF, orden.SerieOF, orden.NumeroOF).subscribe( resp => {
               orden.pedidos = resp
               this.session.setOrdenes(this.ordenes)
+           //   this.totalOrdenes.push(orden)
+
               this.ordenarOrden(orden).then( () => {
                 console.log('ordenes mostrar', this.ordenesMostrar)
                 if(!this.micrajeActivo){
@@ -189,7 +193,33 @@ export class AdminPage implements OnInit {
     this.lista.forEach( item => {
       if(item.micraje == micraje){
         this.ordenesMostrar = item.ordenes
+       
       }
     })
+  }
+
+  getListaUnica() {
+    const micrajesUnicos = [...new Set(this.lista.map(item => item.micraje))];
+    return micrajesUnicos;
+  }
+
+  // ordenarMicrajes() {
+  //   this.lista.sort((a, b) => {
+  //     const micrajeA = a.micraje.slice(0, 3);
+  //     const micrajeB = b.micraje.slice(0, 3);
+  //     return micrajeA.localeCompare(micrajeB);
+  //   });
+  // }
+    
+
+  handleReorder(ev: CustomEvent<ItemReorderEventDetail>) {
+    // The `from` and `to` properties contain the index of the item
+    // when the drag started and ended, respectively
+    console.log('Dragged from index', ev.detail.from, 'to', ev.detail.to);
+
+    // Finish the reorder and position the item in the DOM based on
+    // where the gesture ended. This method can also be called directly
+    // by the reorder group
+    ev.detail.complete();
   }
 }

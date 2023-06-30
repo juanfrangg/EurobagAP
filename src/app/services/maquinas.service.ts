@@ -30,6 +30,10 @@ export class MaquinasService {
     return this.http.get('http://192.168.0.156:8000/api/fases')
   }
 
+  getOperario(){
+    return this.http.get('http://192.168.0.156:8000/api/operarioext')
+  }
+
   getFases2(ID: string){
     return this.http.get(`http://192.168.0.156:8000/api/fases2?ID=${ID}`)
   }
@@ -44,6 +48,10 @@ export class MaquinasService {
 
   setOperarios(operariosOF:any){
     return this.http.post('http://192.168.0.156:8000/api/operarios', operariosOF)
+  }
+
+  updateOperarioExtra(opextra:any){
+    return this.http.post('http://192.168.0.156:8000/api/operarioextra', opextra)
   }
 
   updateOperarios(timerOF:any){
@@ -79,13 +87,12 @@ export class MaquinasService {
  
   }
 
-  updateMaterialOF(montaje:any){
-    return this.http.post('http://192.168.0.156:8000/api/material', montaje)
-    .pipe(
-      tap(()=>{
-        this._refresh$.next()
-      })
-    );
+  updateBobina(bobina:any){
+    return this.http.post('http://192.168.0.156:8000/api/bobina', bobina)
+  }
+
+  updateBobinaTM(tiempo:any){
+    return this.http.post('http://192.168.0.156:8000/api/bobinatm', tiempo)
   }
 
   setOrdenRebobinado(rebobinado:any){
@@ -108,3 +115,4 @@ export class MaquinasService {
     return this.http.post('http://192.168.0.156:8000/api/impresion', impresion)
   }
 }
+

@@ -36,3 +36,14 @@ ion-modal.small-modal{
         border: 1px solid black
     }
 }
+
+
+ion-modal.modalOF{
+    --background: rgb(179, 179, 179)!important;
+    --height: 13% !important;
+    --width: 55% !important;
+    &::part(content){
+        border: 2px solid black
+    }
+}
+

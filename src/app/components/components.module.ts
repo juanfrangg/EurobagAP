@@ -4,13 +4,15 @@ import { IonicModule } from '@ionic/angular';
 import { OrdenComponent } from './orden/orden.component';
 import { FormsModule } from '@angular/forms';
 import { MostrarComponent } from './mostrar/mostrar.component';
+import { TimermodalComponent } from './timermodal/timermodal.component';
 
 
 @NgModule({
-  declarations: [OrdenComponent, MostrarComponent],
+  declarations: [OrdenComponent, MostrarComponent, TimermodalComponent],
   exports:[
     OrdenComponent,
-    MostrarComponent
+    MostrarComponent,
+    TimermodalComponent
   ],
   imports: [
     CommonModule,

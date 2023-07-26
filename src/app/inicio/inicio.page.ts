@@ -27,38 +27,38 @@ selectMaq: any =[]
   fase: any
   descripcion: any
   interr: boolean = false
+
+  articulos: any=[];
+  material: any=[];
+
  
-
-
 
   constructor(private route: Router,
     private session: SessionService,
     private modalController: ModalController,
-    private ordenComponent: OrdenComponent,
     private ordenService: OrdenesService,
     private data: MaquinasService) { }
 
   async ngOnInit() {
+
     await this.session.getSession().then( async resp => {
-      this.getOrdenes(resp)
-    })
+       this.getOrdenes(resp)
+    })    
+
     this.session.getEtapas().then( async resp => {
       this.etapas = resp
     })
+
     this.data.getMaquinas().subscribe(resp=>{
       this.maquina=resp
     })
+
+   // this.ordenarFases()
 
   }
 
   refresh(){
     window.location.reload();
-  }
-
-  async maquinas() {
-    this.data.getMaquinas().subscribe(resp => {
-      this.maquina = resp;
-    });
   }
 
   async onMaquinaSelec(event: any) {
@@ -79,14 +79,37 @@ selectMaq: any =[]
 
       this.ordenes.forEach( orden => {
         orden.Etapas.forEach((ordenetapa:any) => {
-          if(ordenetapa.CodigoMaquina == maquinaSeleccionada  && ordenetapa.Activo == 1){
+          if(ordenetapa.CodigoMaquina == maquinaSeleccionada && ordenetapa.Activo == 1){
             this.ordenesFase.push(orden)
           }
         })
       })
-
-      // console.log('oirdenes de la fase', this.ordenesFase)
   
+  }
+
+  ordenarFases(){
+    const primerosElementos: any[] = [];
+   // console.log('holaaaa 1')
+    this.ordenes.forEach((orden: any) => {
+      const primerElemento = orden.Etapas.find((ordenetapa: any) => ordenetapa.Finalizado == 0);
+   //   console.log('holaaaa 2')
+      if (primerElemento) {
+        primerosElementos.push(primerElemento);
+    //    console.log('holaaaa 3')
+      }
+    });
+  //  console.log('holaaaa 4')
+    primerosElementos.forEach(orden=>{
+      const movpos={
+        MovPos: orden.MovPos,
+        Activo: 1,
+        Finalizado: 0
+      }
+    //  console.log('holaaaa 5')
+      this.data.updateFasesMovPos(movpos).subscribe(resp=>{console.log('Activado los primeros de las ordenes')})
+    })
+  //  console.log('holaaaa 6')
+
   }
   
 
@@ -129,7 +152,9 @@ selectMaq: any =[]
             })
           })
         })
-      })   
+      })
+      this.cargarMats()   
+      this.ordenarFases()
     })
     this.ordenService.getFasesOF().subscribe( resp => {
       this.fasesordenes = resp
@@ -146,8 +171,10 @@ selectMaq: any =[]
         let micraje = linea.CodigoArticulo.substring(3,6)
         let impresion = linea.CodigoArticulo.substring(6,8)
         if(impresion != '00'){
+          linea.Impreso = '1'
           micraje = micraje +' IMPRESO'
         }else{
+          linea.Impreso = '0'
           micraje = micraje +' ANONIMO'
         }
         let medidas = linea.CodigoArticulo.substring(8,12)
@@ -188,8 +215,10 @@ selectMaq: any =[]
             proveedor = linea.CodigoArticulo.substring(1,3)
             impresion = linea.CodigoArticulo.substring(6,8)
             if(impresion != '00'){
+              linea.Impreso = '1'
               micraje = micraje +' IMPRESO'
             }else{
+              linea.Impreso = '0'
               micraje = micraje +' ANONIMO'
             }
             medidas = linea.CodigoArticulo.substring(8,12)
@@ -227,6 +256,7 @@ selectMaq: any =[]
 }
 
 async abrirOrden(orden: any){
+
   const modal = await this.modalController.create({
     component: OrdenComponent,
     cssClass: 'small-modal',
@@ -242,6 +272,44 @@ async abrirOrden(orden: any){
       this.getOrdenes(resp)
     })
   })
+}
+
+cargarMats(){
+  //  este codigo es para leer la tabla de Sage de _EB_ArticulosOF e insertarlo en Eurobag con los datos necesarios
+this.ordenes.forEach(ord=>{
+  const orden={
+    EjercicioOF: ord.EjercicioOF,
+    SerieOF: ord.SerieOF,
+    NumeroOF: ord.NumeroOF,
+  }
+  this.data.getArticulosOF(orden).subscribe(resp => {
+    this.articulos.push(resp);
+    this.articulos.forEach((resp:any)=>{
+      this.material=resp
+      });
+      this.material.forEach((item:any) => {     
+        const descripcion={
+          CodigoArticulo: item.CodigoArticulo
+        }
+          this.data.getBobinasDescrip(descripcion).subscribe((resp:any)=>{
+
+          const materialof={
+            ID: item.ID,
+            EjercicioOF: item.EjercicioOF,
+            SerieOF: item.SerieOF,
+            NumeroOF:item.NumeroOF,
+            Partida: item.Partida,
+            Cantidad: item.UnidadesNecesarias,
+            Material: item.DescripcionArticulo,
+            Ancho: resp[0].Ancho_,
+            Largo: resp[0].Largo_
+          }
+          this.data.setMaterialOF(materialof).subscribe(resp=>{console.log('Material guardado en Eurobag BD')})
+          });
+      });
+
+});
+});
 }
 
 }

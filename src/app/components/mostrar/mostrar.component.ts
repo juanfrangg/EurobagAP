@@ -40,10 +40,9 @@ export class MostrarComponent implements OnInit {
 
   
   validarBobi(){
-    if(this.Comp1 && this.Comp2 && this.Comp3 && this.Comp4 && this.Comp5 && this.Comp6 && 
-      this.Comp7 && this.Comp8 && this.Comp9 && this.Comp10 && this.Comp11 && this.Comp12 && 
-      this.Comp13 && this.Comp14){
-        this.cerrarModal(true)        
+    if(this.Comp1 && this.Comp2 && this.Comp4 && this.Comp5 && this.Comp6 && 
+      this.Comp7 && this.Comp8 && this.Comp9 && this.Comp11 && this.Comp13 && this.Comp14){
+        this.cerrarModal(true)  
       }
   }
   

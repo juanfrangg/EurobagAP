@@ -15,7 +15,7 @@
 
   <ion-item>
     <ion-label>Selecciona una máquina</ion-label>
-    <ion-select placeholder="Elige una máquina" (ionChange)="onMaquinaSelec($event)">
+    <ion-select placeholder="Elige una máquina" interface="action-sheet" (ionChange)="onMaquinaSelec($event)">
       <ion-select-option *ngFor="let item of maquina" [value]="item.CodigoMaquina">
         {{ item.CodigoMaquina }}
       </ion-select-option>
@@ -26,23 +26,30 @@
     <ion-label (ionChange)="onMaquinaSelec($event)" class="fase">{{descripcion}}</ion-label>
   </ion-item>
   
-   <ion-item>
-    <ion-col><b>FECHA</b></ion-col>
-    <ion-col><b>ARTÍCULO</b></ion-col>
-    <ion-col><b>OBSERVACIÓN</b></ion-col>
-    <ion-col><b>CANTIDAD</b></ion-col>
-    <ion-col><b>CLIENTE</b></ion-col>
-    <ion-col><b>Nº PEDIDO</b></ion-col>
+   <ion-item class="ion-text-center">
+    <ion-col size="1.2"><b>FECHA</b></ion-col>
+    <ion-col size="2.5"><b>DESCRIPCIÓN 1</b></ion-col>
+    <ion-col size="2.5"><b>DESCRIPCIÓN 2</b></ion-col>
+    <ion-col size="2"><b>CANTIDAD</b></ion-col>
+    <ion-col size="2"><b>CLIENTE</b></ion-col>
+    <ion-col size="1.8"><b>PEDIDO</b></ion-col>
   </ion-item>
 
-  <ion-item *ngFor="let orden of ordenesFase" (click)="abrirOrden(orden)">
-    <ion-col>{{orden.articulos[0].fecha}}</ion-col>
-    <ion-col>{{orden.articulos[0].DescripcionArticulo}}</ion-col>
-    <ion-col>{{orden.articulos[0].Descripcion2Articulo}}</ion-col>
-    <ion-col>{{orden.articulos[0].Unidades}}</ion-col>
-    <ion-col>{{orden.articulos[0].cliente}}</ion-col>
-    <ion-col>{{orden.articulos[0].NumeroOF}}</ion-col>
+  <ion-item class="ion-text-center" *ngFor="let orden of ordenesFase" (click)="abrirOrden(orden)">
+    <ion-col size="1.2">{{orden.articulos[0].fecha | date: 'dd-MM-yyyy'}}</ion-col>
+    <ion-col size="2.5">{{orden.articulos[0].DescripcionArticulo}}</ion-col>
+    <ion-col size="2.5">{{orden.articulos[0].Descripcion2Articulo}}</ion-col>
+    <ion-col size="2">{{orden.articulos[0].Unidades}}</ion-col>
+    <ion-col size="2">{{orden.articulos[0].cliente}}</ion-col>
+    <ion-col size="1.8">{{orden.articulos[0].NumeroOF}}</ion-col>
   </ion-item>
 
 
 </ion-content>
+<ion-footer>
+  <ion-toolbar>
+   <ion-button (click)="ordenarFases()" expand="block" fill="clear" shape="round">
+    TEST BUTTON
+   </ion-button>
+  </ion-toolbar>
+</ion-footer>

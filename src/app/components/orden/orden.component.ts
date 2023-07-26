@@ -1,17 +1,15 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { ModalController } from '@ionic/angular';
 import { OrdenesService } from 'src/app/services/ordenes.service';
 import { SessionService } from 'src/app/services/session.service';
-
 import { MaquinasService } from 'src/app/services/maquinas.service';
 import { AlertController } from '@ionic/angular';
 import { MostrarComponent } from '../mostrar/mostrar.component';
 import { Storage } from '@ionic/storage-angular';
-import { Subscription } from 'rxjs';
+import { Subscription, isEmpty } from 'rxjs';
 import { TimermodalComponent } from '../timermodal/timermodal.component';
-
-
-
+import { registerLocaleData } from '@angular/common';
+import localeEs from '@angular/common/locales/es';
 
 @Component({
   selector: 'app-orden',
@@ -32,6 +30,8 @@ export class OrdenComponent implements OnInit, OnDestroy {
   estado: String = ''
   cantidad: number = 0
   totalLargo:number = 0
+  materialID:any
+  materialList:any
 
   colorFondo:string='white'
   horas: number = 0;
@@ -59,7 +59,6 @@ export class OrdenComponent implements OnInit, OnDestroy {
   tabbar: boolean=false
   colVisible: boolean=false
   insertado:boolean=false
-  calidad:boolean=false
   horaPausa:any
   qty:number=1
   codigoStorage:string='8778'
@@ -78,7 +77,6 @@ export class OrdenComponent implements OnInit, OnDestroy {
   nCajas:any;
   partidaOF:string[] = [];
   colorFondoBobi:string='white'
-
 
   validar:boolean=false
   Comp1:boolean=false;numericValue1=0;
@@ -131,22 +129,42 @@ export class OrdenComponent implements OnInit, OnDestroy {
   todosoperarios: any[]=[]
   suscription:Subscription | any
 
+  articulos: any=[];
+  material: any=[];
+  movpos: any;
+  fase: any;
 
 
   constructor(private ordenService: OrdenesService, private modalController: ModalController,
-              private session: SessionService, private maquinaService: MaquinasService, private alertController: AlertController, private storage:Storage) { }
+              private session: SessionService, private maquinaService: MaquinasService, 
+              private alertController: AlertController, private storage:Storage, private changeDetectorRef: ChangeDetectorRef) { }
 
   //Order de fabricacion: Posicion 0 del array de documentos
   //Control de calidad fabricacion: Posición 1 del array de documentos
   //ORden de laminacion: Posicion 2 del array de documentos
   //Orden de rebobinado: Posicion 3 del array de documentos
 
-
   async ngOnInit() {
+
+    this.orden.Etapas.forEach((etapas:any)=>{
+      if(etapas.Activo==1){
+        this.movpos=etapas.MovPos
+        this.fase=etapas.Etapa
+      }
+    })
+
+    registerLocaleData(localeEs);
     await this.storage.create()
     this.operador=await this.session.getSession()
     this.maquina=await this.session.getMaquina()
  
+    this.maquinaService.getBobinas().subscribe(resp => {
+      this.bobi = resp;
+      this.bobi.forEach((registro: any) => {
+        this.bobinas.push(registro);
+      });
+    });
+
     this.maquinaService.getOperario().subscribe((data:any) => {
       this.todosoperarios.push(data);
     });
@@ -163,10 +181,7 @@ export class OrdenComponent implements OnInit, OnDestroy {
     const anio = fechaActual.getFullYear();
     this.fecha = `${this.agregarCerosIzquierda(anio)}-${this.agregarCerosIzquierda(mes)}-${this.agregarCerosIzquierda(dia)}`;
 
-
-
     if(this.operador.Rol!=1){
-
       this.tabbar=true
     }
 
@@ -179,12 +194,7 @@ export class OrdenComponent implements OnInit, OnDestroy {
           this.orden = orden
         }
       })
-          
-      //en modo administrador lo devuelve undefined
-      this.orden.Material.forEach((item:any) => {
-        this.totalLargo += parseInt(item.Largo);      
-      });
-    
+   
       // console.log('orden', this.orden)
       this.controlCalidadFabricacion = this.orden.ControlCalidadFabricacion
       this.ordenLaminacion = this.orden.OrdenLaminacion
@@ -193,10 +203,10 @@ export class OrdenComponent implements OnInit, OnDestroy {
       // console.log('orden laminacion', this.ordenLaminacion)
       // console.log('orden rebobinado', this.ordenRebobinado)
       this.ordenService.getArticulos(this.ejercicio, this.serie, this.numero).subscribe( resp => {
-        this.orden.articulos = resp
+        //this.orden.articulos = resp
         this.orden.articulos.forEach( (art: any) => {
-          art.Unidades = Math.round(Number(art.Unidades) * 100) / 100
-          this.cantidad += Math.round(Number(art.Unidades) * 100) / 100
+          // art.Unidades = Math.round(Number(art.Unidades) * 100) / 100
+          this.cantidad = art.Unidades
         })
         this.ordenService.getPedidos(this.ejercicio, this.serie, this.numero).subscribe( resp => {
           this.orden.pedidos = resp
@@ -217,11 +227,13 @@ export class OrdenComponent implements OnInit, OnDestroy {
       })
     })
     //this.orden.FechaOF = new Date(this.orden.FechaOF)
-    this.estado = 'OF'
-
-
+    this.estado = 'COF' 
   }
-
+  
+  refrescarComponente() {
+    this.ngOnInit();
+  }
+  
   ngOnDestroy(){
     this.suscription.unsubscribe()
   }
@@ -247,12 +259,10 @@ export class OrdenComponent implements OnInit, OnDestroy {
   goControlCalidad(estado:String){
     this.estado=estado
    // this.finEvent=true
-
   }
 
   goOrdenFabricacion(estado:String){
     this.estado=estado
-
   }
 
   async operarioExtra(){
@@ -267,6 +277,7 @@ export class OrdenComponent implements OnInit, OnDestroy {
       EjercicioOF: this.orden.EjercicioOF,
       SerieOF: this.orden.SerieOF,
       NumeroOF: this.orden.NumeroOF,
+      MovPos: this.movpos,
       OperarioExtra: event.detail.value
     }
 
@@ -285,13 +296,17 @@ export class OrdenComponent implements OnInit, OnDestroy {
       SerieOF: this.orden.SerieOF,
       NumeroOF: this.orden.NumeroOF,
     }
-
+    this.totalLargo=0
     this.maquinaService.getMaterialOF(material).subscribe((data:any) => {
       this.materiales=data;
+           // en modo administrador lo devuelve undefined
+           this.materiales.forEach((item:any) => {
+            this.totalLargo += parseInt(item.Largo);      
+          });
     });
   }
 
-  async iniciarDetenerBobina(){
+async iniciarDetenerBobina(){
 
     if(!this.intervalB ){
       this.colorFondoBobi='rgb(97, 207, 111)';
@@ -311,44 +326,70 @@ export class OrdenComponent implements OnInit, OnDestroy {
       const modals = await this.modalController.create({
         component: TimermodalComponent,
         cssClass: 'modalOF',
-        componentProps: { },
+        componentProps: {
+          materiales: this.materiales,
+          ejercicio: this.orden.EjercicioOF,
+          numero: this.orden.NumeroOF,
+          serie: this.orden.SerieOF
+        },
         backdropDismiss: false
       });
       modals.onDidDismiss().then((result) => {
-  });
+        this.materialID = result.data;
+        console.log(this.materialID);
+      });
       await modals.present();
     }else{
       this.colorFondoBobi='white'
-
       this.totalB = this.sumarTiempo(this.totalB, this.horasB, this.minutosB, this.segundosB);
-
-      const tiempo:any={
+      const orden = {
         EjercicioOF: this.orden.EjercicioOF,
         SerieOF: this.orden.SerieOF,
         NumeroOF: this.orden.NumeroOF,
-        TiempoMontaje: this.totalB
-      }
+      }; 
+      let totalBobi:any
+      const materialMap: { [id: string]: any } = {};      
+      this.maquinaService.getMaterialOF(orden).subscribe((resp:any) => {
+        if (resp.length > 0) {
+          resp.forEach((bobina: any) => {
+            this.materialID.forEach((id:any) => {
+              if (id == bobina.ID) {
+                totalBobi = bobina.TiempoMontaje;
+               if(totalBobi!==null){
+                 this.totalB = this.sumarTiempo(totalBobi, this.horasB, this.minutosB, this.segundosB);
+               } 
+               materialMap[id] = { 
+                ID: id,
+                EjercicioOF: this.orden.EjercicioOF,
+                SerieOF: this.orden.SerieOF,
+                NumeroOF: this.orden.NumeroOF,
+                TiempoMontaje: this.totalB
+              };              
+             }
+            })
+          });
+        }
+          this.materialList = Object.values(materialMap); 
+          this.maquinaService.updateBobinaTM(this.materialList).subscribe(resp=>{console.log('Tiempo de Montaje insertado.'),   
+          this.maquinaService.getMaterialOF(orden).subscribe((data:any) => {this.materiales=data});
+        });
 
-    this.maquinaService.updateBobinaTM(tiempo).subscribe(resp=>{console.log('Tiempo de Montaje insertado.')})
-    
-    clearInterval(this.intervalB);
-    this.intervalB = null;
-    this.horasB = 0;
-    this.minutosB = 0;
-    this.segundosB = 0;
-    this.cronoB=false
-
+      clearInterval(this.intervalB);
+        this.totalB='00:00:00'
+        this.intervalB = null;
+        this.horasB = 0;
+        this.minutosB = 0;
+        this.segundosB = 0;
+        this.cronoB=false
+      });
     }
-
   }
 
   finalizarBobina() {
-
-    this.stopB=true
-   
+    this.stopB=true   
   }
-  
-  async mostrarCod(){
+
+  async mostrarCod() {
 
   }
 
@@ -357,6 +398,15 @@ export class OrdenComponent implements OnInit, OnDestroy {
     this.pausaB = false;
     this.colVisible=true;
 
+    const operario2:any={
+      EjercicioOF: this.orden.EjercicioOF,
+      SerieOF: this.orden.SerieOF,
+      NumeroOF: this.orden.NumeroOF,
+      Operario: this.operador.CodigoEmpleado,
+   }
+
+    this.maquinaService.getOperarios2(operario2).subscribe((resp: any) => {
+     });
 if(!this.insertado){
   this.goOrdenFabricacion('COF');
  
@@ -374,6 +424,7 @@ if(!this.insertado){
        EjercicioOF: this.orden.EjercicioOF,
        SerieOF: this.orden.SerieOF,
        NumeroOF: this.orden.NumeroOF,
+       MovPos: this.movpos,
        Operario: this.operador.CodigoEmpleado,
        Fecha: this.fecha,
        HoraInicio: this.inicioH,
@@ -382,15 +433,12 @@ if(!this.insertado){
     }
             this.maquinaService.setOperarios(maquinaService).subscribe(resp=>{console.log('Operacion insertada')})
   }
-          const activoOF:any={
-            EjercicioOF: this.orden.EjercicioOF,
-            SerieOF: this.orden.SerieOF,
-            NumeroOF: this.orden.NumeroOF,
-            Activo: 1,
-            Finalizado: 0
-         }
-           this.maquinaService.updateFasesOF(activoOF).subscribe(resp=>{console.log('Activo pasado a 1')})
-
+        //   const activoOF:any={
+        //     MovPos: this.movpos,
+        //     Activo: 1,
+        //     Finalizado: 0
+        //  }
+        //    this.maquinaService.updateFasesMovPos(activoOF).subscribe(resp=>{console.log('Activo pasado a 1')})
     if(!this.crono){
     this.interval = setInterval(() => {
       this.segundos++;
@@ -408,18 +456,15 @@ if(!this.insertado){
   this.crono=true
   this.cronoB=true
   this.ocultarBoton = false;
-
   }
 
   
   async detenerCronometro() {
-
     this.maquinaService.getOperarios(this.orden.EjercicioOF,this.orden.SerieOF,this.orden.NumeroOF,this.operador.CodigoEmpleado).subscribe((horaPausa: any) => {
      horaPausa.forEach((element:any) => {
       this.horaPausa = element.HoraInicio
+      });
     });
-    });
-
     this.storage.set('codigMant', this.codigoStorage);
     const codMan=await this.storage.get('codigMant')
     this.codmanteni=codMan
@@ -474,9 +519,8 @@ if(!this.insertado){
         {
           text: 'Aceptar',
           handler:async (data) => {
-
             if(data === 'Revision de Bolsas'){
-              console.log('pausa BOLSAS')
+             // console.log('pausa BOLSAS')
               let intervalP:any;
               if(!intervalP){
                   intervalP = setInterval(() => {
@@ -488,10 +532,8 @@ if(!this.insertado){
                       this.minutosP = 0;
                       this.horasP++;
                     }
-                  }
-                
-                }, 1000);
-                
+                  }                
+                }, 1000);               
               }
               const alert = await this.alertController.create({
                 header: 'Revisión de Bolsas',
@@ -501,10 +543,8 @@ if(!this.insertado){
                   {
                     text: 'Aceptar',
                     handler: (data) => {
-
                       this.motivoPausa='Revision de Bolsas'
                       this.totalP =(this.agregarCerosIzquierda(this.horasP)+':'+this.agregarCerosIzquierda(this.minutosP)+':'+this.agregarCerosIzquierda(this.segundosP))
-
                       const pausaOF:any={
                         EjercicioOF: this.orden.EjercicioOF,
                         SerieOF: this.orden.SerieOF,
@@ -517,22 +557,18 @@ if(!this.insertado){
                       }
                       this.maquinaService.setPausa(pausaOF).subscribe(resp=>{console.log('Pausa Insertada')})
                       this.qty++;
-
                       this.horasP = 0;
                       this.minutosP = 0;
-                      this.segundosP = 0;
-                  
+                      this.segundosP = 0;                 
                       clearInterval(intervalP);
                     }
                   }
                 ]
-              });
-          
-              await alert.present();
-              
+              });          
+              await alert.present();              
             }
             else if(data === 'Cambio de Bobina'){
-              console.log('pausa BOBINA')
+            //  console.log('pausa BOBINA')
               let intervalP:any;
               if(!intervalP){
                   intervalP = setInterval(() => {
@@ -544,20 +580,16 @@ if(!this.insertado){
                       this.minutosP = 0;
                       this.horasP++;
                     }
-                  }
-                
-                }, 1000);
-                
+                  }                
+                }, 1000);                
               }
               const modal = await this.modalController.create({
                 component: MostrarComponent,
-                componentProps: {                },
+                componentProps: { },
                 backdropDismiss: false
               });
               modal.onDidDismiss().then((result) => {
-
-                if (result && result.data) {
-                  
+                if (result && result.data) {                  
                   this.motivoPausa='Cambio de Bobina'
                   this.totalP =(this.agregarCerosIzquierda(this.horasP)+':'+this.agregarCerosIzquierda(this.minutosP)+':'+this.agregarCerosIzquierda(this.segundosP))
 
@@ -573,30 +605,25 @@ if(!this.insertado){
                   }
                   this.maquinaService.setPausa(pausaOF).subscribe(resp=>{console.log('Pausa Bobina Insertada')})
                   this.qty++;  
-
                   this.horasP = 0;
                   this.minutosP = 0;
-                  this.segundosP = 0;
-              
+                  this.segundosP = 0;              
                   clearInterval(intervalP);
-                }
-                
+                }                
               });
-              await modal.present();
-            
+              await modal.present();            
             }
-            else if (data === 'otros') {
-           
-              console.log('pausa OTROS')
+            else if (data === 'otros') {           
+             // console.log('pausa OTROS')
               this.pausarOrden()
               this.totalT = this.sumarTiempo(this.totalT, this.horas, this.minutos, this.segundos);
 
               this.horas = 0;
               this.minutos = 0;
               this.segundos = 0;
-              this.crono=false
-          
+              this.crono=false          
               clearInterval(this.interval);
+
               const alert = await this.alertController.create({
                 header: 'Ingresa una opción',
                 backdropDismiss: false,
@@ -619,7 +646,6 @@ if(!this.insertado){
                     text: 'Aceptar',
                     handler: (data) => {
                       this.motivoPausa=data.opcion
-
                       const pausaOF:any={
                         EjercicioOF: this.orden.EjercicioOF,
                         SerieOF: this.orden.SerieOF,
@@ -631,18 +657,14 @@ if(!this.insertado){
                       }
                       this.maquinaService.setPausa(pausaOF).subscribe(resp=>{console.log('Pausa Insertada')})
                       this.qty++;
-
                     }
                   }
                 ]
-              });
-          
-              await alert.present();
-              
+              });          
+              await alert.present();              
             }
-           else if (data === 'Mantenimiento') {
-           
-            console.log('pausa Mantenimiento')
+           else if (data === 'Mantenimiento') {           
+            //console.log('pausa Mantenimiento')
             this.pausarOrden()
             this.totalT = this.sumarTiempo(this.totalT, this.horas, this.minutos, this.segundos);
 
@@ -663,12 +685,9 @@ if(!this.insertado){
                       this.minutosP = 0;
                       this.horasP++;
                     }
-                  }
-                
-                }, 1000);
-                
+                  }                
+                }, 1000);                
               }
-
               const showInputDialog = async () => {
                 const alert = await this.alertController.create({
                   header: 'Avisar ha mantenimiento',
@@ -690,10 +709,8 @@ if(!this.insertado){
                       handler: (data) => {
                       //  this.totalP = this.sumarTiempo('00:00:00', this.horasP, this.minutosP, this.segundosP);
                         this.totalP =(this.agregarCerosIzquierda(this.horasP)+':'+this.agregarCerosIzquierda(this.minutosP)+':'+this.agregarCerosIzquierda(this.segundosP))
-
                           if (data.codigo === this.codmanteni) {
                             this.motivoPausa='Mantenimiento'
-
                             const pausaOF:any={
                               EjercicioOF: this.orden.EjercicioOF,
                               SerieOF: this.orden.SerieOF,
@@ -706,113 +723,108 @@ if(!this.insertado){
                             }
                             this.maquinaService.setPausa(pausaOF).subscribe(resp=>{console.log('Pausa Insertada')})
                             this.qty++;  
-
                             this.horasP = 0;
                             this.minutosP = 0;
                             this.segundosP = 0;                        
                             clearInterval(intervalP);
-
                           } else {
                             showInputDialog();
-                          }
-                  
+                          }                  
                       }
                     }
                   ]
                 });
                 await alert.present();
               };
-              showInputDialog();
-      
-          
-              await alert.present();
-              
-            } else {
-             
-              console.log('pausa ELSE')
-              this.pausarOrden()
-              let conditionPause=false
-            
-              this.motivoPausa=data
+              showInputDialog();                
+              await alert.present();              
+              } else {             
+                  this.pausarOrden()
+                  this.motivoPausa=data
+                  const pausaOF:any={
+                    EjercicioOF: this.orden.EjercicioOF,
+                    SerieOF: this.orden.SerieOF,
+                    NumeroOF: this.orden.NumeroOF,
+                    Operario: this.operador.CodigoEmpleado,
+                    HoraInicio:this.horaPausa,
+                    QtyPausa:this.qty,
+                    MotivoPausa:this.motivoPausa
+                  }
+                  this.maquinaService.setPausa(pausaOF).subscribe(resp=>{console.log('Pausa Insertada')})
+                  this.qty++;
+    // ESTE totalT REPLICARLO EN LAS OPCIONES QUE AÑADE EL TRAMO AL TOTAL DE LA OF
+                  this.totalT = this.sumarTiempo(this.totalT, this.horas, this.minutos, this.segundos);
 
-              const pausaOF:any={
-                EjercicioOF: this.orden.EjercicioOF,
-                SerieOF: this.orden.SerieOF,
-                NumeroOF: this.orden.NumeroOF,
-                Operario: this.operador.CodigoEmpleado,
-                HoraInicio:this.horaPausa,
-                QtyPausa:this.qty,
-                MotivoPausa:this.motivoPausa
-              }
-              this.maquinaService.setPausa(pausaOF).subscribe(resp=>{console.log('Pausa Insertada')})
-              this.qty++;
-
-// ESTE totalT REPLICARLO EN LA SOPCIONES QUE AÑADE EL TRAMO AL TOTAL DE LA OF
-              this.totalT = this.sumarTiempo(this.totalT, this.horas, this.minutos, this.segundos);
-
-              this.horas = 0;
-              this.minutos = 0;
-              this.segundos = 0;
-              this.crono=false
-          
-              clearInterval(this.interval);
-            }
-
-
+                  this.horas = 0;
+                  this.minutos = 0;
+                  this.segundos = 0;
+                  this.crono=false          
+                  clearInterval(this.interval);
+                }
           }
         }
       ]
     });
-
-
-
     await alert.present();
-  
   }
 
-  async finalizarOrden() {
+  validarCCRot=false
+  validarCCArra=false
+  validarCCFabri=false
+async finalizarOrden() {
+  const ccTodos={
+    EjercicioOF: this.orden.EjercicioOF,
+    SerieOF: this.orden.SerieOF,
+    NumeroOF: this.orden.NumeroOF,
+    MovPos: this.movpos
+  }
+  //revisamos que la orden haya pasado por calidad antes de finalizar la orden
+  this.maquinaService.getCCFabricacion(ccTodos).subscribe((resp:any) => {
+    if (resp.length>0) {this.validarCCFabri=true;}});
+  this.maquinaService.getCCArranque(ccTodos).subscribe((resp:any)=>{
+    if (resp.length>0) {this.validarCCArra=true;}});
+  this.maquinaService.getCCRotura(ccTodos).subscribe((resp:any)=>{
+    if (resp.length>0) {this.validarCCRot=true;}});
+
+    if(this.validarCCFabri && this.validarCCArra && this.validarCCRot){
     const fechaActual = new Date();
     const horas = fechaActual.getHours();
     const minutos = fechaActual.getMinutes();
-
     this.finH=`${this.agregarCerosIzquierda(horas)}:${this.agregarCerosIzquierda(minutos)}`;
-
     this.totalT = this.sumarTiempo(this.totalT, this.horas, this.minutos, this.segundos);
 
     const timerOF:any={
       EjercicioOF: this.orden.EjercicioOF,
       SerieOF: this.orden.SerieOF,
       NumeroOF: this.orden.NumeroOF,
+      MovPos: this.movpos,
       HoraFin: this.finH,
       Tiempo:this.totalT
-   }
-   const activoOF:any={
-    EjercicioOF: this.orden.EjercicioOF,
-    SerieOF: this.orden.SerieOF,
-    NumeroOF: this.orden.NumeroOF,
-    Activo: 0,
-    Finalizado: 1
- }
-
- const bolsas:any={
-  EjercicioOF: this.orden.EjercicioOF,
-  SerieOF: this.orden.SerieOF,
-  NumeroOF: this.orden.NumeroOF,
-  //MedidaBolsa: '',
-  RefCaja: this.referenciaCaja,
-  UnidadesFabricadas: this.undFabricadas,
-  BolsasCaja: this.bolsasCaja,
-  Resto: this.resto,
-  TotalCajas: this.totalCajas,
-  Lote: this.lote,
-  NumeroCajas: this.nCajas
- }
+    }
+    const activoOF:any={
+      MovPos: this.movpos,
+      Activo: 0,
+      Finalizado: 1
+    }
+    const bolsas:any={
+      EjercicioOF: this.orden.EjercicioOF,
+      SerieOF: this.orden.SerieOF,
+      NumeroOF: this.orden.NumeroOF,
+      MovPos: this.movpos,
+      RefCaja: this.referenciaCaja,
+      UnidadesFabricadas: this.undFabricadas,
+      BolsasCaja: this.bolsasCaja,
+      Resto: this.resto,
+      TotalCajas: this.totalCajas,
+      Lote: this.lote,
+      NumeroCajas: this.nCajas
+    }
 
  this.colorFondo='white';
  
   this.maquinaService.setBolsasOF(bolsas).subscribe(resp=>{console.log('BolsasOF Insertadas')})
   this.maquinaService.updateOperarios(timerOF).subscribe(resp=>{console.log('Operacion actualizada')})
-  this.maquinaService.updateFasesOF(activoOF).subscribe(resp=>{console.log('Activo pasado a 0')})
+  this.maquinaService.updateFasesMovPos(activoOF).subscribe(resp=>{console.log('Finalizado pasado a 1')})
 
    const alert = await this.alertController.create({
     header: 'Ha finalizado la Operación de Fabricación',
@@ -822,7 +834,6 @@ if(!this.insertado){
       text: 'Cerrar'
     }]
   });
-
   await alert.present();
 
     this.horas = 0;
@@ -831,10 +842,18 @@ if(!this.insertado){
     clearInterval(this.interval);
     this.ocultarBoton = true;
     this.crono=false
-    this.calidad=true;
-
+    }else{
+        const alert = await this.alertController.create({
+          header: 'Error al finalizar la Orden de Fabricación',
+          message: 'Comprueba los distintos campos',
+          backdropDismiss: false,
+          buttons: [{
+            text: 'Cerrar'
+          }]
+        });
+      await alert.present();
+    }
   }
-
 
  sumarTiempo(tiempoActual: string, horas: number, minutos: number, segundos: number): string {
   const tiempoActualArray = tiempoActual.split(':');
@@ -868,46 +887,46 @@ modificarPartida(index:number) {
   this.botonPartida = -1;
 }
 
-
-
-  // ------------------------------------CONTROL DE CALIDAD------------------------------------------- //
+                      // ------------------------------------CONTROL DE CALIDAD------------------------------------------- //
 
 async validaVerificacion(){
-if(this.Comp1==true && this.Comp2==true && this.Comp4==true && this.Comp5==true && this.Comp6==true && 
-  this.Comp7==true && this.Comp8==true && this.Comp9==true && this.Comp11==true && this.Comp13==true && this.Comp14==true){
+  if(this.Comp1==true && this.Comp2==true && this.Comp4==true && this.Comp5==true && this.Comp6==true && 
+    this.Comp7==true && this.Comp8==true && this.Comp9==true && this.Comp11==true && this.Comp13==true && this.Comp14==true){
+      const alert = await this.alertController.create({
+        header: 'VERIFICACIONES PREVIAS',
+        message: 'Has completado todas las verificaciones',
+        backdropDismiss: false,
+        buttons: [{
+          text: 'Aceptar',
+          handler: () => {
+            this.validar=true
+          //  this.goOrdenFabricacion('OF')
+          }
+        }]
+      });
+      await alert.present();
+  }else{
     const alert = await this.alertController.create({
       header: 'VERIFICACIONES PREVIAS',
-      message: 'Has completado todas las verificaciones',
+      message: 'Faltan verificaciones por realizar',
       backdropDismiss: false,
       buttons: [{
         text: 'Aceptar',
-        handler: () => {
-          this.validar=true
-          this.goOrdenFabricacion('OF')
-        }
+        handler: () => { }
       }]
     });
-  
     await alert.present();
- 
-}else{
-  const alert = await this.alertController.create({
-    header: 'VERIFICACIONES PREVIAS',
-    message: 'Faltan verificaciones por realizar',
-    backdropDismiss: false,
-    buttons: [{
-      text: 'Aceptar',
-      handler: () => {
-
-      }
-    }]
-  });
-
-  await alert.present();
-
+  }
 }
 
+mostrarHora = false;
+checkboxHora = false;
+async toggleHora() {
 
+    this.mostrarHora = this.checkboxHora;
+    this.fechaActual()
+    this.hora = this.horaFormateada
+    this.storage.set('Hora_PresionRotura',this.hora);
 }
 
 async agregarFila() {
@@ -919,9 +938,7 @@ async agregarFila() {
     buttons: [ {
       text: 'Cancelar',
       role: 'cancel',
-      handler: () => {
-
-      }
+      handler: () => { }
     },
     {
       text: 'Aceptar',
@@ -930,6 +947,7 @@ async agregarFila() {
           EjercicioOF: this.orden.EjercicioOF,
           SerieOF: this.orden.SerieOF,
           NumeroOF: this.orden.NumeroOF,
+          MovPos: this.movpos,
           CajaUnidad: this.cajaUnidad,
           Hora: this.hora,
           Posicion1: this.posicion1,
@@ -942,7 +960,6 @@ async agregarFila() {
           Retractilado: this.Retrac
         }
         this.roturas.push(rotura)
-
         this.maquinaService.setControlRotura(rotura).subscribe(resp=>{console.log('Control Rotura insertado')})
       
         this.cajaUnidad= '';
@@ -955,17 +972,17 @@ async agregarFila() {
         this.posicion6= '';
         this.estanqueidad= false;
         this.retractilado= false;
+        this.checkboxHora= false;
       }
     }]
   });
-
   await alert.present();
-
   const nuevaFila = {};
   this.nuevasFilas.push(nuevaFila);
-
 }
+
 fechaFormateada:any
+horaFormateada:any
 fechaActual(){
   const fecha = new Date();
 
@@ -984,114 +1001,190 @@ fechaActual(){
   const segundosFormateados = segundos.toString().padStart(2, '0');
 
   this.fechaFormateada = `${anioFormateado}-${mesFormateado}-${diaFormateado} ${horasFormateadas}:${minutosFormateados}:${segundosFormateados}`;
-
+  this.horaFormateada = `${horasFormateadas}:${minutosFormateados}:${segundosFormateados}`;
 }
 
 mostrarDimension1 = false;
 checkboxDimension1 = false;
-toggleDimension1() {
-  this.mostrarDimension1 = this.checkboxDimension1;
-  this.fechaActual()
-  this.dimensionesBolsas1=this.fechaFormateada
+async toggleDimension1() {
+  const check1=await this.storage.get('dimensionesBolsas1');
+    if(check1){
+      this.mostrarDimension1 = this.checkboxDimension1;
+      this.dimensionesBolsas1=check1;
+    }else{
+      this.mostrarDimension1 = this.checkboxDimension1;
+      this.fechaActual()
+      this.dimensionesBolsas1 = this.fechaFormateada
+      this.storage.set('dimensionesBolsas1',this.dimensionesBolsas1);
+    }
 }
 
 mostrarDimension2 = false;
-checkboxDimension2 = false;  
-toggleDimension2() {
+checkboxDimension2 = false;
+async toggleDimension2() {
+  const check2=await this.storage.get('dimensionesBolsas2');
+  if(check2){
+    this.mostrarDimension2 = this.checkboxDimension2;
+    this.dimensionesBolsas2=check2;
+  }else{
   this.mostrarDimension2 = this.checkboxDimension2;
   this.fechaActual()
-  this.dimensionesBolsas2=this.fechaFormateada
+  this.dimensionesBolsas2 = this.fechaFormateada
+  this.storage.set('dimensionesBolsas2',this.dimensionesBolsas2)
+  }
 }
 
 mostrarDimension3 = false;
 checkboxDimension3 = false;  
-toggleDimension3() {
+async toggleDimension3() {
+  const check3=await this.storage.get('dimensionesBolsas3');
+  if(check3){
+    this.mostrarDimension3 = this.checkboxDimension3;
+    this.dimensionesBolsas3=check3;
+  }else{
   this.mostrarDimension3 = this.checkboxDimension3;
   this.fechaActual()
   this.dimensionesBolsas3=this.fechaFormateada
+  this.storage.set('dimensionesBolsas3',this.dimensionesBolsas3)
+  }
 }
 
 mostrarDimension4 = false;
 checkboxDimension4 = false;  
-toggleDimension4() {
+async toggleDimension4() {
+  const check4=await this.storage.get('dimensionesBolsas4');
+  if(check4){
+    this.mostrarDimension4 = this.checkboxDimension4;
+    this.dimensionesBolsas4=check4;
+  }else{
   this.mostrarDimension4 = this.checkboxDimension4;
   this.fechaActual()
   this.dimensionesBolsas4=this.fechaFormateada
+  this.storage.set('dimensionesBolsas4',this.dimensionesBolsas4)
+  }
 }
 
 mostrarDimension5 = false;
 checkboxDimension5 = false;
-toggleDimension5() {
+async toggleDimension5() {
+  const check5=await this.storage.get('dimensionesBolsas5');
+  if(check5){
+    this.mostrarDimension5 = this.checkboxDimension5;
+    this.dimensionesBolsas5=check5;
+  }else{
   this.mostrarDimension5 = this.checkboxDimension5;
   this.fechaActual()
   this.dimensionesBolsas5=this.fechaFormateada
+  this.storage.set('dimensionesBolsas5',this.dimensionesBolsas5)
+  }
 }
 
 mostrarDimension6 = false;
 checkboxDimension6 = false;
-toggleDimension6() {
+async toggleDimension6() {
+  const check6=await this.storage.get('dimensionesBolsas6');
+  if(check6){
+    this.mostrarDimension6 = this.checkboxDimension6;
+    this.dimensionesBolsas6=check6;
+  }else{
   this.mostrarDimension6 = this.checkboxDimension6;
   this.fechaActual()
   this.dimensionesBolsas6=this.fechaFormateada
+  this.storage.set('dimensionesBolsas6',this.dimensionesBolsas6)
+  }
 }
 // ANCHO
 mostrarAncho1 = false;
 checkboxAncho1 = false; 
-toggleAncho1() {
+async toggleAncho1() {
+  const check1=await this.storage.get('anchoSoldaduras1');
+  if(check1){
+    this.mostrarAncho1 = this.checkboxAncho1;
+    this.anchoSoldaduras1=check1;
+  }else{
   this.mostrarAncho1 = this.checkboxAncho1;
   this.fechaActual()
   this.anchoSoldaduras1=this.fechaFormateada
+  this.storage.set('anchoSoldaduras1', this.anchoSoldaduras1)
+  }
 }
 
 mostrarAncho2 = false;
 checkboxAncho2 = false;  
-toggleAncho2() {
+async toggleAncho2() {
+  const check2=await this.storage.get('anchoSoldaduras2');
+  if(check2){
+    this.mostrarAncho2 = this.checkboxAncho2;
+    this.anchoSoldaduras2=check2;
+  }else{
   this.mostrarAncho2 = this.checkboxAncho2;
   this.fechaActual()
   this.anchoSoldaduras2=this.fechaFormateada
+  this.storage.set('anchoSoldaduras2', this.anchoSoldaduras2)
+  }
 }
 
 mostrarAncho3 = false;
 checkboxAncho3 = false;  
-toggleAncho3() {
+async toggleAncho3() {
+  const check3=await this.storage.get('anchoSoldaduras3');
+  if(check3){
+    this.mostrarAncho3 = this.checkboxAncho3;
+    this.anchoSoldaduras3=check3;
+  }else{
   this.mostrarAncho3 = this.checkboxAncho3;
   this.fechaActual()
   this.anchoSoldaduras3=this.fechaFormateada
+  this.storage.set('anchoSoldaduras3', this.anchoSoldaduras3)
+  }
 }
 
 mostrarAncho4 = false;
 checkboxAncho4 = false;  
-toggleAncho4() {
+async toggleAncho4() {
+  const check4=await this.storage.get('anchoSoldaduras4');
+  if(check4){
+    this.mostrarAncho4 = this.checkboxAncho4;
+    this.anchoSoldaduras4=check4;
+  }else{
   this.mostrarAncho4 = this.checkboxAncho4;
   this.fechaActual()
   this.anchoSoldaduras4=this.fechaFormateada
+  this.storage.set('anchoSoldaduras4', this.anchoSoldaduras4)
+  }
 }
 
 mostrarAncho5 = false;
 checkboxAncho5 = false;   
-toggleAncho5() {
+async toggleAncho5() {
+  const check5=await this.storage.get('anchoSoldaduras5');
+  if(check5){
+    this.mostrarAncho5 = this.checkboxAncho5;
+    this.anchoSoldaduras5=check5;
+  }else{
   this.mostrarAncho5 = this.checkboxAncho5;
   this.fechaActual()
   this.anchoSoldaduras5=this.fechaFormateada
+  this.storage.set('anchoSoldaduras5', this.anchoSoldaduras5)
+  }
 }
 
 mostrarAncho6 = false;
 checkboxAncho6 = false; 
-toggleAncho6() {
+async toggleAncho6() {
+  const check6=await this.storage.get('anchoSoldaduras6');
+  if(check6){
+    this.mostrarAncho6 = this.checkboxAncho6;
+    this.anchoSoldaduras6=check6;
+  }else{
   this.mostrarAncho6 = this.checkboxAncho6;
   this.fechaActual()
   this.anchoSoldaduras6=this.fechaFormateada
+  this.storage.set('anchoSoldaduras6', this.anchoSoldaduras6)
+  }
 }
 
-mostrarSombrero = false;
-checkboxSombrero = false;
-toggleSombrero() {
-  this.mostrarSombrero = this.checkboxSombrero;
-  this.fechaActual()
-  this.sombrero=this.fechaFormateada
-}
 async controlCalidad(){
-  
   const alert = await this.alertController.create({
     header: 'CONTROL DE CALIDAD FABRICACIÓN',
     message: 'Vas a  finalizar el control de calidad, ¿estás seguro?',
@@ -1099,9 +1192,7 @@ async controlCalidad(){
     buttons: [ {
       text: 'Cancelar',
       role: 'cancel',
-      handler: () => {
-
-      }
+      handler: () => { }
     },
     {
       text: 'Aceptar',
@@ -1110,6 +1201,7 @@ async controlCalidad(){
     EjercicioOF: this.orden.EjercicioOF,
     SerieOF: this.orden.SerieOF,
     NumeroOF: this.orden.NumeroOF,
+    MovPos: this.movpos,
     CajaUnidad: this.cajaUnidad,
     Hora: this.hora,
     Posicion1: this.posicion1,
@@ -1121,14 +1213,13 @@ async controlCalidad(){
     Estanqueidad: this.estanqueidad,
     Retractilado: this.retractilado
   }
-
   this.maquinaService.setControlRotura(rotura).subscribe(resp=>{console.log('Control Rotura insertado')})
-
 
   const arranqueProd:any={
     EjercicioOF: this.orden.EjercicioOF,
     SerieOF: this.orden.SerieOF,
     NumeroOF: this.orden.NumeroOF,
+    MovPos: this.movpos,
     DimensionesBolsas1: this.dimensionesBolsas1,
     DimensionesBolsas2: this.dimensionesBolsas2,
     DimensionesBolsas3: this.dimensionesBolsas3,
@@ -1140,50 +1231,54 @@ async controlCalidad(){
     AnchoSoldaduras3: this.anchoSoldaduras3,
     AnchoSoldaduras4: this.anchoSoldaduras4,
     AnchoSoldaduras5: this.anchoSoldaduras5,
-    AnchoSoldaduras6: this.anchoSoldaduras6,
-    Sombrero: this.sombrero
+    AnchoSoldaduras6: this.anchoSoldaduras6
   }
-  
   this.maquinaService.setControlArranqueProd(arranqueProd).subscribe(resp=>{console.log('Arranque Prod insertado')})
-
+  this.agregarFila();
 
   this.ordenService.getArticulos(this.orden.EjercicioOF, this.orden.SerieOF, this.orden.NumeroOF).subscribe( (resp:any) => {
     this.articulo = resp
     this.articulo.forEach( (art: any) => {
 
-const calidadFabricacion:any={
-  EjercicioOF: this.orden.EjercicioOF,
-  SerieOF: this.orden.SerieOF,
-  NumeroOF: this.orden.NumeroOF,
-  Fecha: this.fecha,
-  Articulo: art.DescripcionArticulo,
-  Comp1: this.Comp1,
-  Comp2: this.Comp2,
-  Comp4: this.Comp4,
-  Comp5: this.Comp5,
-  Comp6: this.Comp6,
-  Comp7: this.Comp7,
-  Comp8: this.Comp8,
-  Comp9: this.Comp9,
-  Comp11: this.Comp11,
-  Comp13: this.Comp13,
-  Comp14: this.Comp14,
-  Comp15: this.numericValue15,
-  Comp16: this.numericValue16,
-  Comp17: this.numericValue17,
-  Comp18: this.numericValue18,
-  Observaciones: this.observaciones,
-  Operario: this.operador.CodigoEmpleado
-}
-this.maquinaService.setControlCalidadFabricacion(calidadFabricacion).subscribe(resp=>{console.log('Calidad Fabricación insertado')})
-})
-})
-  this.finCalidad=true
-
-  
-}
-}]
-});
+  const calidadFabricacion:any={
+    EjercicioOF: this.orden.EjercicioOF,
+    SerieOF: this.orden.SerieOF,
+    NumeroOF: this.orden.NumeroOF,
+    MovPos: this.movpos,
+    Fecha: this.fecha,
+    Articulo: art.DescripcionArticulo,
+    Comp1: this.Comp1,
+    Comp2: this.Comp2,
+    Comp4: this.Comp4,
+    Comp5: this.Comp5,
+    Comp6: this.Comp6,
+    Comp7: this.Comp7,
+    Comp8: this.Comp8,
+    Comp9: this.Comp9,
+    Comp11: this.Comp11,
+    Comp13: this.Comp13,
+    Comp14: this.Comp14,
+    Comp15: this.numericValue15,
+    Comp16: this.numericValue16,
+    Comp17: this.numericValue17,
+    Comp18: this.numericValue18,
+    Observaciones: this.observaciones,
+    Operario: this.operador.CodigoEmpleado
+  }
+  this.maquinaService.setControlCalidadFabricacion(calidadFabricacion).subscribe(resp=>{console.log('Calidad Fabricación insertado')})
+  })
+  })
+    this.finCalidad=true    
+  }
+  }]
+  });
+  //limpiar el storage de los registros de la orden presente
+  this.storage.remove('dimensionesBolsas1');  this.storage.remove('anchoSoldaduras1');
+  this.storage.remove('dimensionesBolsas2');  this.storage.remove('anchoSoldaduras2');
+  this.storage.remove('dimensionesBolsas3');  this.storage.remove('anchoSoldaduras3');
+  this.storage.remove('dimensionesBolsas4');  this.storage.remove('anchoSoldaduras4');
+  this.storage.remove('dimensionesBolsas5');  this.storage.remove('anchoSoldaduras5');
+  this.storage.remove('dimensionesBolsas6');  this.storage.remove('anchoSoldaduras6');
 
 await alert.present();
 }
@@ -1191,7 +1286,6 @@ await alert.present();
 
 loadCompState(compName: string) {
   const compStateKey = `${compName}State`;
-
   // Cargar el estado del checkbox desde el almacenamiento local
   this.storage.get(compStateKey).then(state => {
     if (state !== null) {
@@ -1202,10 +1296,8 @@ loadCompState(compName: string) {
 
 onCheckboxChange(event: any, compName: string, compValue: number) {
   const compStateKey = `${compName}State`;
-
   // Guardar el estado en el almacenamiento local
   this.storage.set(compStateKey, compName);
-
   // Actualizar el valor numérico correspondiente
   compValue = event.target.checked ? 0 : 1;
 
@@ -1216,6 +1308,7 @@ onCheckboxChange(event: any, compName: string, compValue: number) {
         EjercicioOF: this.orden.EjercicioOF,
         SerieOF: this.orden.SerieOF,
         NumeroOF: this.orden.NumeroOF,
+        MovPos: this.movpos,
         Fecha: this.fecha,
         Articulo: art.DescripcionArticulo,
         Comp1: this.Comp1,
@@ -1268,8 +1361,7 @@ onCheckboxChangeRetrac(event:any) {
    this.Retrac = this.retractilado ? 1 : 0;
 }
 
-
-// ----------------------------------------------ORDEN DE LAMINACION------------------------------------ //
+                            // ----------------------------------------------ORDEN DE LAMINACION------------------------------------ //
 cronoL: boolean=false
 ocultarBotonL: boolean=false
 horasL: number = 0;
@@ -1298,10 +1390,8 @@ iniciarLaminado(){
   const fechaActual = new Date();
   const horas = fechaActual.getHours();
   const minutos = fechaActual.getMinutes();
-
   this.horaH=`${this.agregarCerosIzquierda(horas)}:${this.agregarCerosIzquierda(minutos)}`;
 
-    
   if(!this.cronoL){
     this.intervalL = setInterval(() => {
       this.segundosL++;
@@ -1319,21 +1409,19 @@ this.ocultarBotonL=true
 this.cronoL=true
 }
 
-
 finalizarLaminado(){
 
   const fechaActual = new Date();
   const horas = fechaActual.getHours();
   const minutos = fechaActual.getMinutes();
-
   this.horaF=`${this.agregarCerosIzquierda(horas)}:${this.agregarCerosIzquierda(minutos)}`;
-
   this.totalL = this.sumarTiempo(this.totalL, this.horasL, this.minutosL, this.segundosL);
 
  const laminas={
   EjercicioOF: this.orden.EjercicioOF,
   SerieOF: this.orden.SerieOF,
   NumeroOF: this.orden.NumeroOF,
+  MovPos: this.movpos,
   FechaOrden: this.orden.FechaOF,
   TipoA: this.tipoA,
   TipoB: this.tipoB,
@@ -1354,9 +1442,14 @@ finalizarLaminado(){
   Operario: this.operador.CodigoEmpleado,
   Observaciones: this.observacionesL
  }
-
  this.maquinaService.setOrdenLaminacion(laminas).subscribe(resp=>{console.log('Laminacion Insertado')})
 
+ const activoOF:any={
+  MovPos: this.movpos,
+  Activo: 0,
+  Finalizado: 1
+}
+ this.maquinaService.updateFasesMovPos(activoOF).subscribe(resp=>{console.log('Finalizado pasado a 1')})
   // this.endurecedor = '';
   // this.resina = '';
   // this.loteL = '';
@@ -1371,8 +1464,6 @@ finalizarLaminado(){
   // this.consumidoB = '';
   // this.observacionesL = '';
   // this.laminado='';
-
-
  this.horasL = 0;
  this.minutosL = 0;
  this.segundosL = 0;
@@ -1381,7 +1472,7 @@ finalizarLaminado(){
  this.cronoL=false
 }
 
-                                                                //ORDEN DE REBOBINADO
+                          // ----------------------------------------------ORDEN DE REBOBINADO------------------------------------ //
 cronoR: boolean=false
 horasR: number = 0;
 minutosR: number = 0;
@@ -1390,9 +1481,53 @@ intervalR: any;
 totalR: any='00:00:00'
 ocultarBotonR:boolean=false
 observacionesR:any
+bobinas: any=[]
+bobi:any
+bobinaFiltrada=[...this.bobinas]
+selectedBobina: any[]=[];
+compararBobina: any;
+escribir: string='';
+bobinaOrigin: any;
+anchoBobi: number [] = [];
+largoBobi: number [] = [];
+cont: number = 0;
+checkSage:boolean[]=[] 
+
+buscarBobina(event:any) {
+  this.escribir = event.target.value.toLowerCase();
+  this.bobinaFiltrada = this.bobinas.filter((d: any) => d.DescripcionArticulo.toLowerCase().indexOf(this.escribir) > -1);
+}
+limpiarBusqueda() {
+  this.bobinaFiltrada = [];
+  this.escribir = '';
+}
+
+async seleccionarBobina(item: any) {
+//  const materiales = this.materiales; // Asignar this.materiales a una variable local
+  const alert = await this.alertController.create({
+    header: `${item.DescripcionArticulo}`,
+    message: '¿Quieres añadir esta bobina?',
+    buttons: [
+      {
+        text: 'Cancelar',
+        role: 'cancel',
+        handler: () => { }
+      },
+      {
+        text: 'Aceptar',
+        handler: (selectedOption) => {
+          this.selectedBobina.push(item);
+          this.compararBobina = selectedOption;
+        }
+      }
+    ]
+  });
+
+  await alert.present();
+}
 
 iniciarRebobinado(){
-  
+
   if(!this.cronoR){
     this.intervalR = setInterval(() => {
       this.segundosR++;
@@ -1410,35 +1545,9 @@ this.ocultarBotonR=true
 this.cronoR=true
 }
 
-anchoBobina: string[] = [];
-largoBobina: string[] = [];
-actualizarBobina(index:number){
-
-  this.materiales[index].Ancho=this.anchoBobina[index]
-  this.materiales[index].Largo=this.largoBobina[index]
-
-  this.maquinaService.updateBobina(this.materiales[index]).subscribe(resp=>{console.log('Bobina Actualizada.')});
-
-  this.anchoBobina[index] = '';
-  this.largoBobina[index] = '';
-  this.botonBobina = -1;
-}
-
-botonBobina: number = -1;
-camposBobina: boolean = true;
-
 botonPartida: number = -1;
 camposPartida: boolean = true;
-
 verificarCamposVacios(index: number) {
-  this.camposBobina = true; 
-  if (this.anchoBobina[index] && this.largoBobina[index]) {
-    this.camposBobina = false;
-    this.botonBobina = index; // Establece el índice del botón activo
-  } else {
-    this.botonBobina = -1; // Si los campos están vacíos, establece el índice del botón activo a -1
-  }
-
   this.camposPartida = true; 
   if (this.partidaOF[index]) {
     this.camposPartida = false;
@@ -1447,7 +1556,6 @@ verificarCamposVacios(index: number) {
     this.botonPartida = -1; // Si los campos están vacíos, establece el índice del botón activo a -1
   }
 }
-
 
 finalizarRebobinado(){
   this.totalR = this.sumarTiempo(this.totalR, this.horasR, this.minutosR, this.segundosR);
@@ -1461,23 +1569,82 @@ finalizarRebobinado(){
     TiempoInvertido: this.totalR,
     Observaciones:this.observacionesR
   }
+  this.materiales.forEach((bobinaOriginal:any) => {
+    const descripcion={
+      DescripcionArticulo: bobinaOriginal.Material
+    }
+      this.maquinaService.getBobinasDescrip(descripcion).subscribe((resp:any)=>{
+        this.bobinaOrigin=resp[0].CodigoArticulo    
+        this.fechaActual()
+          const bobina1={
+          CodigoEmpresa: this.orden.CodigoEmpresa,
+          EjercicioOF: this.orden.EjercicioOF,
+          SerieOF: this.orden.SerieOF,
+          Periodo: 99 ,
+          Fecha: this.fechaFormateada,
+          FechaRegistro: this.fechaFormateada,
+          Documento: 0,
+          CodigoArticulo: this.bobinaOrigin,
+          Ancho: bobinaOriginal.Ancho,
+          Largo: bobinaOriginal.Largo,
+          Unidades: bobinaOriginal.Largo,
+          Partida: bobinaOriginal.Partida,
+          TipoMovimiento: 1,
+          OrigenMovimiento: 'T',
+          Procesado: 0
+        }
+          this.maquinaService.setBobinas(bobina1).subscribe(resp=>{console.log('Bobina Insertada en MovimientoStock')})
+      });
+  });
 
-
+  this.selectedBobina.forEach((bobinaMod:any) => {
+    this.fechaActual()
+        const bobina2={
+        CodigoEmpresa: this.orden.CodigoEmpresa,
+        EjercicioOF: this.orden.EjercicioOF,
+        SerieOF: this.orden.SerieOF,
+        Periodo: 99 ,
+        Fecha: this.fechaFormateada,
+        FechaRegistro: this.fechaFormateada,
+        Documento: 0,
+        CodigoArticulo: bobinaMod.CodigoArticulo,
+        Ancho: this.anchoBobi[this.cont],
+        Largo: this.largoBobi[this.cont],
+        Unidades: this.largoBobi[this.cont],
+        Partida: '',
+        TipoMovimiento: 2,
+        OrigenMovimiento: 'T',
+        Procesado: 0
+      }
+    if(this.checkSage[this.cont]){
+      this.maquinaService.setBobinas(bobina2).subscribe(resp=>{console.log('Bobina Insertada en MovimientoStock')})
+    }
+    this.cont++;
+  });
  this.maquinaService.setOrdenRebobinado(rebobinado).subscribe(resp=>{console.log('Rebobinado Insertado')})
 
- this.observacionesR='';
-this.totalR='00:00:00';
-
+  this.observacionesR='';
+  this.totalR='00:00:00';
   this.horasR = 0;
   this.minutosR = 0;
   this.segundosR = 0;
   clearInterval(this.intervalR);
   this.ocultarBotonR = false;
   this.cronoR=false
+  this.limpiarBusqueda();
+  this.cont=0
+  this.largoBobi=[]
+  this.checkSage=[]
+  this.selectedBobina=[]
+
+  const activoOF:any={
+    MovPos: this.movpos,
+    Activo: 0,
+    Finalizado: 1
+  }
+   this.maquinaService.updateFasesMovPos(activoOF).subscribe(resp=>{console.log('Finalizado pasado a 1')})
 }
-
-
-                                                                  //ORDEN DE IMPRESION
+                        // ----------------------------------------------ORDEN DE IMPRESION------------------------------------ //
 
 pantones: any[]=[];
 nuevasFilasPanton: any[] = [];
@@ -1485,9 +1652,7 @@ numPanton:any;
 color:any;
 kg:any;
 loteTinta:any;
-
 async agregarPanton() {
-
   const alert = await this.alertController.create({
     header: 'DETALLES DE PANTÓN',
     message: 'Vas a guardar un registro, ¿estás seguro?',
@@ -1495,9 +1660,7 @@ async agregarPanton() {
     buttons: [ {
       text: 'Cancelar',
       role: 'cancel',
-      handler: () => {
-
-      }
+      handler: () => { }
     },
     {
       text: 'Aceptar',
@@ -1511,24 +1674,18 @@ async agregarPanton() {
           Kg:this.kg,
           LoteTinta:this.loteTinta
         }
-
         this.pantones.push(panton)
-
         this.maquinaService.setDetallePanton(panton).subscribe(resp=>{console.log('Detalles de Pantón insertado')})
       
         this.color= '';
         this.kg= '';
         this.loteTinta= '';
-
       }
     }]
   });
-
   await alert.present();
-
   const nuevaFilaPanton = {};
   this.nuevasFilasPanton.push(nuevaFilaPanton);
-
 }
 
 nombreD:any
@@ -1538,9 +1695,7 @@ aniloxD:any
 posicionD:number=1
 tintasD: any[]=[];
 nuevasFilasTintasD: any[] = [];
-
 async agregarCaraDelantera() {
-
   const alert = await this.alertController.create({
     header: 'IMPRESIÓN CARA DELANTERA',
     message: 'Vas a guardar un registro, ¿estás seguro?',
@@ -1548,9 +1703,7 @@ async agregarCaraDelantera() {
     buttons: [ {
       text: 'Cancelar',
       role: 'cancel',
-      handler: () => {
-
-      }
+      handler: () => { }
     },
     {
       text: 'Aceptar',
@@ -1565,9 +1718,7 @@ async agregarCaraDelantera() {
           Anilox:this.aniloxD,
           Posicion:this.posicionD,
         }
-
         this.tintasD.push(tinta)
-
         this.maquinaService.setTintaImpresion(tinta).subscribe(resp=>{console.log('Cara Delantera insertado')})
 
         this.nombreD=''
@@ -1579,12 +1730,9 @@ async agregarCaraDelantera() {
       }
     }]
   });
-
   await alert.present();
-
   const nuevaFilaTintasD = {};
   this.nuevasFilasTintasD.push(nuevaFilaTintasD);
-
 }
 
 nombreT:any
@@ -1594,9 +1742,7 @@ aniloxT:any
 posicionT:number=1
 tintasT: any[]=[];
 nuevasFilasTintasT: any[] = [];
-
 async agregarCaraTrasera() {
-
   const alert = await this.alertController.create({
     header: 'IMPRESIÓN CARA TRASERA',
     message: 'Vas a guardar un registro, ¿estás seguro?',
@@ -1604,9 +1750,7 @@ async agregarCaraTrasera() {
     buttons: [ {
       text: 'Cancelar',
       role: 'cancel',
-      handler: () => {
-
-      }
+      handler: () => { }
     },
     {
       text: 'Aceptar',
@@ -1621,9 +1765,7 @@ async agregarCaraTrasera() {
           Anilox:this.aniloxT,
           Posicion:this.posicionT,
         }
-
         this.tintasT.push(tintas)
-
         this.maquinaService.setTintaImpresion(tintas).subscribe(resp=>{console.log('Cara Trasera insertado')})
       
         this.nombreT=''
@@ -1631,17 +1773,12 @@ async agregarCaraTrasera() {
         this.kgT=''
         this.aniloxT=''
         this.posicionT++
-
-
       }
     }]
   });
-
   await alert.present();
-
   const nuevaFilaTintasT = {};
   this.nuevasFilasTintasT.push(nuevaFilaTintasT);
-
 }
 
 checkboxCliches() {
@@ -1660,8 +1797,6 @@ checkboxOperario() {
   this.operarioImpre = this.operarioImpre ? 1 : 0;
 }
 
-
-
 intervalCD:any
 pausaCD:any
 segundosCD:number = 0
@@ -1669,9 +1804,7 @@ minutosCD:number = 0
 horasCD:number = 0
 totalCD:any = '00:00:00'
 cronoCD:boolean=false
-
 iniciarDetenerClichesD(){
-
   if(!this.intervalCD ){
     this.cronoCD=false
     this.intervalCD = setInterval(() => {
@@ -1686,10 +1819,8 @@ iniciarDetenerClichesD(){
         }
       }
     }
-    }, 1000);
-    
+    }, 1000);    
   }else{
-
   this.totalCD =(this.agregarCerosIzquierda(this.horasCD)+':'+this.agregarCerosIzquierda(this.minutosCD)+':'+this.agregarCerosIzquierda(this.segundosCD))
 
   clearInterval(this.intervalCD);
@@ -1708,9 +1839,7 @@ minutosCT:number = 0
 horasCT:number = 0
 totalCT:any = '00:00:00'
 cronoCT:boolean=false
-
 iniciarDetenerClichesT(){
-
   if(!this.intervalCT ){
     this.cronoCT=false
     this.intervalCT = setInterval(() => {
@@ -1725,10 +1854,8 @@ iniciarDetenerClichesT(){
         }
       }
     }
-    }, 1000);
-    
+    }, 1000);    
   }else{
-
   this.totalCT =(this.agregarCerosIzquierda(this.horasCT)+':'+this.agregarCerosIzquierda(this.minutosCT)+':'+this.agregarCerosIzquierda(this.segundosCT))
 
   clearInterval(this.intervalCT);
@@ -1747,9 +1874,7 @@ minutosIT:number = 0
 horasIT:number = 0
 totalIT:any = '00:00:00'
 cronoIT:boolean=false
-
 iniciarDetenerImpresionT(){
-
   if(!this.intervalIT ){
     this.cronoIT=false
     this.intervalIT = setInterval(() => {
@@ -1764,10 +1889,8 @@ iniciarDetenerImpresionT(){
         }
       }
     }
-    }, 1000);
-    
+    }, 1000);   
   }else{
-
   this.totalIT =(this.agregarCerosIzquierda(this.horasIT)+':'+this.agregarCerosIzquierda(this.minutosIT)+':'+this.agregarCerosIzquierda(this.segundosIT))
 
   clearInterval(this.intervalIT);
@@ -1786,9 +1909,7 @@ minutosID:number = 0
 horasID:number = 0
 totalID:any = '00:00:00'
 cronoID:boolean=false
-
 iniciarDetenerImpresionD(){
-
   if(!this.intervalID ){
     this.cronoID=false
     this.intervalID = setInterval(() => {
@@ -1803,10 +1924,8 @@ iniciarDetenerImpresionD(){
         }
       }
     }
-    }, 1000);
-    
+    }, 1000);   
   }else{
-
   this.totalID =(this.agregarCerosIzquierda(this.horasID)+':'+this.agregarCerosIzquierda(this.minutosID)+':'+this.agregarCerosIzquierda(this.segundosID))
 
   clearInterval(this.intervalID);
@@ -1825,9 +1944,7 @@ minutosCD2:number = 0
 horasCD2:number = 0
 totalCD2:any = '00:00:00'
 cronoCD2:boolean=false
-
 iniciarDetenerClichesD2(){
-
   if(!this.intervalCD2 ){
     this.cronoCD2=false
     this.intervalCD2 = setInterval(() => {
@@ -1842,10 +1959,8 @@ iniciarDetenerClichesD2(){
         }
       }
     }
-    }, 1000);
-    
+    }, 1000);    
   }else{
-
   this.totalCD2 =(this.agregarCerosIzquierda(this.horasCD2)+':'+this.agregarCerosIzquierda(this.minutosCD2)+':'+this.agregarCerosIzquierda(this.segundosCD2))
 
   clearInterval(this.intervalCD2);
@@ -1864,9 +1979,7 @@ minutosCT2:number = 0
 horasCT2:number = 0
 totalCT2:any = '00:00:00'
 cronoCT2:boolean=false
-
 iniciarDetenerClichesT2(){
-
   if(!this.intervalCT2 ){
     this.cronoCT2=false
     this.intervalCT2 = setInterval(() => {
@@ -1881,10 +1994,8 @@ iniciarDetenerClichesT2(){
         }
       }
     }
-    }, 1000);
-    
+    }, 1000);    
   }else{
-
   this.totalCT2 =(this.agregarCerosIzquierda(this.horasCT2)+':'+this.agregarCerosIzquierda(this.minutosCT2)+':'+this.agregarCerosIzquierda(this.segundosCT2))
 
   clearInterval(this.intervalCT2);
@@ -1927,12 +2038,7 @@ confirDiseno:number|any
 operarioImpre:number=0
 operarioImpre2:number=0
 
-test(){
-  console.log(this.fecha)
-  }
-
 agregarOrdenImpresion(){
-
 const impresion={
   EjercicioOF: this.orden.EjercicioOF,
   SerieOF: this.orden.SerieOF,
@@ -1982,7 +2088,6 @@ const impresion={
   TiempoTotalDesmontajeClichesTrasera: this.totalCT2,
   OperarioImpresion: this.operarioImpre
 }
-
 this.maquinaService.setOrdenImpresion(impresion).subscribe(resp=>{console.log('Orden de Impresion insertado.')})
 
 const tinta:any={
@@ -1995,7 +2100,6 @@ const tinta:any={
   Anilox:this.aniloxD,
   Posicion:this.posicionD,
 }
-
 this.maquinaService.setTintaImpresion(tinta).subscribe(resp=>{console.log('Cara Delantera insertado')})
 
 this.nombreD=''
@@ -2014,7 +2118,6 @@ const tintas:any={
   Anilox:this.aniloxT,
   Posicion:this.posicionT,
 }
-
 this.maquinaService.setTintaImpresion(tintas).subscribe(resp=>{console.log('Cara Trasera insertado')})
 
 this.nombreT=''
@@ -2032,13 +2135,18 @@ const panton:any={
   Kg:this.kg,
   LoteTinta:this.loteTinta
 }
-
 this.maquinaService.setDetallePanton(panton).subscribe(resp=>{console.log('Detalles de Pantón insertado')})
 
 this.color= '';
 this.kg= '';
 this.loteTinta= '';
 
+const activoOF:any={
+  MovPos: this.movpos,
+  Activo: 0,
+  Finalizado: 1
+}
+ this.maquinaService.updateFasesMovPos(activoOF).subscribe(resp=>{console.log('Finalizado pasado a 1')})
 }
 
 }

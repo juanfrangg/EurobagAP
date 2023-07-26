@@ -8,13 +8,12 @@
         <ion-icon name="close-outline"></ion-icon>
       </ion-button>
     </ion-buttons>
-
     <ion-tab-bar>
-      <ion-tab-button style="border: solid 1px black" (click)="cambiarEstado('OF')">
+      <ion-tab-button style="border: solid 1px black" (click)="cambiarEstado('OF')" *ngIf="fase == 1">
         <b style="font-size: 200%; color: blue" *ngIf="estado == 'OF'">Orden de fabricación</b>
         <b style="font-size: 200%; color: grey" *ngIf="estado != 'OF'">Orden de fabricación</b>
       </ion-tab-button>
-      <ion-tab-button style="border: solid 1px black" (click)="cambiarEstado('OI')">
+      <ion-tab-button style="border: solid 1px black" (click)="cambiarEstado('OI')" *ngIf="fase == 3">
         <b style="font-size: 200%; color: blue" *ngIf="estado == 'OI'">Orden de impresión</b>
         <b style="font-size: 200%; color: grey" *ngIf="estado != 'OI'">Orden de impresión</b>
       </ion-tab-button>
@@ -22,31 +21,33 @@
         <b style="font-size: 130%; color: blue" *ngIf="estado == 'COF'">Control de Calidad Fabricación</b>
         <b style="font-size: 130%; color: grey" *ngIf="estado != 'COF'">Control de Calidad Fabricación</b>
       </ion-tab-button>
-      <ion-tab-button style="border: solid 1px black" (click)="cambiarEstado('OL')" *ngIf="ordenLaminacion">
+      <ion-tab-button style="border: solid 1px black" (click)="cambiarEstado('OL')" *ngIf="fase == 4">
         <b style="font-size: 200%; color: blue" *ngIf="estado == 'OL'">Orden Laminacion</b>
         <b style="font-size: 200%; color: grey" *ngIf="estado != 'OL'">Orden Laminacion</b>
       </ion-tab-button>
-      <ion-tab-button style="border: solid 1px black" (click)="cambiarEstado('OR')" *ngIf="ordenRebobinado">
+      <ion-tab-button style="border: solid 1px black" (click)="cambiarEstado('OR')" *ngIf="fase == 2">
         <b style="font-size: 200%; color: blue" *ngIf="estado == 'OR'">Orden Rebobinado</b>
         <b style="font-size: 200%; color: grey" *ngIf="estado != 'OR'">Orden Rebobinado</b>
       </ion-tab-button>
     </ion-tab-bar>
-
   </ion-toolbar>
 </ion-header>
+
 <ion-content *ngIf="estado == 'OF'">
   <br>
-  <ion-row style="margin-right: 20px;margin-left: 20px">
-    <ion-col>
-      <ion-col>
-        <b>FECHA PEDIDO</b>
-      </ion-col>
-      <ion-col style="border: solid 1px black">
-        <b>{{orden.pedidos[0].FechaPedido | date: 'dd/MM/yyyy'}}</b>
-      </ion-col>
+  <ion-row class="ion-text-center" style="margin-right: 20px;margin-left: 20px">
+    <ion-col style="background-color: rgb(180, 175, 175)">
+      <b>FECHA PEDIDO</b>
+    </ion-col>
+    <ion-col style="border: solid 1px black">
+      <b>{{orden.pedidos[0].FechaPedido | date: 'dd/MM/yyyy'}}</b>
+    </ion-col>
+    <ion-col size="2.5"></ion-col>
+    <ion-col >
+    </ion-col>
+    <ion-col >
     </ion-col>
   </ion-row>
-  <br>
   <ion-row class="ion-text-center" style="margin-right: 20px;margin-left: 20px">
       <ion-col style="font-size: 78%; background-color: rgb(180, 175, 175)">
         <b>FECHA DE LA ORDEN</b>
@@ -81,24 +82,21 @@
     </ion-col>
   </ion-row>
   <br>
-  <ion-row class="ion-text-center" style="margin-right: 20px;margin-left: 20px">
+  <ion-row class="ion-text-center" style="margin-right: 20px;margin-left: 20px" *ngIf="orden.articulos[0].Descripcion2Articulo">
     <ion-col style="background-color: rgb(180, 175, 175); max-width: 16%">
       <b>IMPRESIÓN</b>
     </ion-col>
-    <ion-col style="border: solid 1px black" *ngIf="orden.articulos[0].Impreso == 0">
-      <b>NO TIENE IMPRESIÓN</b>
-    </ion-col>
-    <ion-col style="border: solid 1px black" *ngIf="orden.articulos[0].Impreso == 1">
-      <b>TIENE IMPRESIÓN</b>
+    <ion-col style="border: solid 1px black">
+      <b>{{orden.articulos[0].Descripcion2Articulo}}</b>
     </ion-col>
   </ion-row>
-  <br>
+  <br *ngIf="orden.articulos[0].Descripcion2Articulo">
   <ion-row class="ion-text-center" style="margin-right: 20px;margin-left: 20px">
     <ion-col style="background-color: rgb(180, 175, 175); max-width: 16%">
       <b>CANTIDADES</b>
     </ion-col>
     <ion-col style="border: solid 1px black">
-      <b>{{this.cantidad}}</b>
+      <b>{{this.cantidad | number: '1.0-0' : 'es'}}</b>
     </ion-col>
   </ion-row>
   <br>
@@ -107,7 +105,16 @@
       <b>MAQUINA</b>
     </ion-col>
     <ion-col style="border: solid 1px black; max-width: 8%">
-      {{maquina}}
+      <b>{{maquina}}</b>
+    </ion-col>
+  </ion-row>
+  <br>
+  <ion-row class="ion-text-center" style="background-color: #428cff;margin-left: 20px; margin-right: 20px; border: solid 1px black;">
+    <b style="margin-left: 40%">DESCRIPCION</b>
+  </ion-row>
+  <ion-row class="ion-text-center" style="margin-left: 20px; margin-right: 20px;">
+    <ion-col style="border: solid 1px black; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+      <ion-textarea disabled="true">Aqui se mostrara los comentarios de la orden</ion-textarea>
     </ion-col>
   </ion-row>
   <br>
@@ -127,6 +134,9 @@
     <ion-col style="border: solid 1px black; background-color: rgb(180, 175, 175); border-left: none;">
       <b>TIEMPO</b>
     </ion-col>
+    <!-- <ion-col style="border: solid 1px black; background-color: rgb(180, 175, 175); border-left: none;">
+      <b>OPERARIO EXTRA</b>
+    </ion-col> -->
   </ion-row>
   <ion-row class="ion-text-center" style="padding-left: 20px; padding-right: 20px" >
     <ion-col *ngIf="colVisible" style="border: solid 1px black; border-right: none;">
@@ -144,8 +154,11 @@
     <ion-col [style.background]="colorFondo" *ngIf="colVisible" style="border: solid 1px black;border-left: none;">
       <b>{{ horas | number: '2.0' }}:{{ minutos | number: '2.0' }}:{{ segundos | number: '2.0' }}</b>
     </ion-col>
+    <!-- <ion-col *ngIf="colVisible" style="border: solid 1px black; border-left: none;">
+      <b>{{operador.OperarioExtra}}</b>
+    </ion-col> -->
   </ion-row>
-  <ion-row style="padding-left: 20px; padding-right: 20px">
+  <ion-row style="padding-left: 20px; padding-right: 20px;">
     <ion-col size="2.4" *ngIf="tabbar">
       <ion-icon (click)="operarioExtra()" color="medium" name="duplicate" size="large"></ion-icon>
     </ion-col>
@@ -164,83 +177,73 @@
   </ion-row>
   <br>
   <ion-row class="ion-text-center" style="padding-left: 20px; padding-right: 20px">
-    <ion-col size="1.7" style="border: solid 1px black; background-color: rgb(180, 175, 175); border-right: none;">
+    <ion-col size="2.4" style="border: solid 1px black; background-color: rgb(180, 175, 175); border-right: none;">
       <b>PARTIDA</b>
     </ion-col>
-    <ion-col size="1.7" style="border: solid 1px black; background-color: rgb(180, 175, 175); border-right: none;">
+    <ion-col size="2.4" style="border: solid 1px black; background-color: rgb(180, 175, 175); border-right: none;">
       <b>MATERIAL</b>
     </ion-col>
-    <ion-col size="1.7" style="border: solid 1px black; background-color: rgb(180, 175, 175); font-size: small;">
+    <ion-col size="2.4" style="border: solid 1px black; background-color: rgb(180, 175, 175);">
       <b>ANCHO(mm)</b>
     </ion-col>
-    <ion-col size="1.7" style="border: solid 1px black; background-color: rgb(180, 175, 175); border-right: none; border-left: none;">
+    <ion-col size="2.4" style="border: solid 1px black; background-color: rgb(180, 175, 175); border-right: none; border-left: none;">
       <b>LARGO(m)</b>
     </ion-col>
-    <ion-col size="1.7" style="border: solid 1px black; background-color: rgb(180, 175, 175);">
+    <ion-col size="2.4" style="border: solid 1px black; background-color: rgb(180, 175, 175);">
       <b>TIEMPO DE MONTAJE</b>
-    </ion-col>
-    <ion-col size="1.7" style="border: solid 1px black; background-color: rgb(180, 175, 175); border-right: none; border-left: none;">
-      <b>TIEMPO DE MÁQUINA</b>
-    </ion-col>
-    <ion-col size="1.7" style="border: solid 1px black; background-color: rgb(180, 175, 175);">
-      <b>PASOS DE MÁQUINA</b>
     </ion-col>
   </ion-row>
   <ion-row class="ion-text-center" style="padding-left: 20px; padding-right: 20px" *ngFor="let item of materiales; let i = index">
-    <ion-col size="1.7" style="border: solid 1px black; border-right: none;">
+    <ion-col size="2.4" style="border: solid 1px black; border-right: none;">
       <b>{{item.Partida}}
       <ion-textarea *ngIf="tabbar" [(ngModel)]="partidaOF[i]" (input)="verificarCamposVacios(i)" style="max-height: 30px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></ion-textarea></b>
     </ion-col>
-    <ion-col size="1.7" style="border: solid 1px black; border-right: none;">
+    <ion-col size="2.4" style="border: solid 1px black; border-right: none;">
       <b>{{item.Material}}</b>
     </ion-col>
-    <ion-col size="1.7" style="border: solid 1px black;">
-      <b>{{item.Ancho}}</b>
+    <ion-col size="2.4" style="border: solid 1px black;">
+      <b>{{item.Ancho | number: '1.0-0' : 'es'}}</b>
     </ion-col>
-    <ion-col size="1.7" style="border: solid 1px black; border-right: none; border-left: none;">
-      <b>{{item.Largo}}</b>
+    <ion-col size="2.4" style="border: solid 1px black; border-right: none; border-left: none;">
+      <b>{{item.Largo | number: '1.0-0' : 'es'}}</b>
     </ion-col>
-    <ion-col size="1.7" style="border: solid 1px black;">
-      <b>{{this.totalB}}</b>
+    <ion-col size="2.4" style="border: solid 1px black;">
+      <b>{{item.TiempoMontaje}}</b>
     </ion-col>
-    <ion-col size="1.7" style="border: solid 1px black; border-right: none; border-left: none;">
-      <b>{{item.TiempoMaquina}}</b>
-    </ion-col>
-    <ion-col size="1.7" style="border: solid 1px black;">
-      <b>{{item.PasosMaquina}}</b>
-    </ion-col>
-    <ion-col size="1.7" style="border: solid 1px black; border-top: none; background-color: rgb(211, 203, 203);" *ngIf="tabbar">
+    <ion-col size="2.4" style="border: solid 1px black; border-top: none; background-color: rgb(211, 203, 203);" *ngIf="tabbar">
       <button fill="solid" style="background-color: rgb(211, 203, 203);" (click)="modificarPartida(i)" [disabled]="botonPartida !== i">Cambiar</button>
     </ion-col>
   </ion-row>
   <ion-row class="ion-text-center" style="padding-left: 20px; padding-right: 20px">
-    <ion-col size="1.7" style="border: solid 1px black; border: none; ">
+    <ion-col size="2.4" style="border: solid 1px black; border: none; ">
     </ion-col>
-    <ion-col size="1.7" style="border: solid 1px black; border: none; ">
+    <ion-col size="2.4" style="border: solid 1px black; border: none; ">
     </ion-col>
-    <ion-col size="1.7" style="border: solid 1px black; padding-left:4px; border: none;">
+    <ion-col size="2.4" style="border: solid 1px black; padding-left:4px; border: none;">
     </ion-col>
-    <ion-col size="1.7" style="border: solid 1px black; padding-left:4px;">
-      <b>{{totalLargo}}</b>
+    <ion-col size="2.4" style="border: solid 1px black; padding-left:4px;">
+      <b>{{totalLargo | number: '1.0-0' : 'es'}}</b>
     </ion-col>
-    <ion-col size="1.7" [style.background]="colorFondoBobi" style="border: solid 1px black; padding-left:4px; border-left: none;" *ngIf="colVisible && !stopB">
-      <b>{{ horasB | number: '2.0' }}:{{ minutosB | number: '2.0' }}:{{ segundosB | number: '2.0' }}</b>
-    </ion-col>
-    <ion-col size="1.7"  style="border: solid 1px black; border-left: none; background-color: rgb(211, 203, 203);" *ngIf="colVisible && !stopB">
+    <ion-col size="2.4"  style="border: solid 1px black; border-left: none; background-color: rgb(211, 203, 203);" *ngIf="colVisible && !stopB">
       <button style="background-color: rgb(211, 203, 203);" (click)="iniciarDetenerBobina()"><b>Iniciar/Fin</b></button>
     </ion-col>
-    <ion-col size="1.7" style="border: solid 1px black; padding-left:4px; border: none; ">
+  </ion-row>
+  <ion-row class="ion-text-center" style="padding-left: 20px; padding-right: 20px">
+    <ion-col size="9.6" style="border: solid 1px black; border: none; ">
+    </ion-col>
+    <ion-col size="2.4" [style.background]="colorFondoBobi" style="border: solid 1px black; padding-left:4px;" *ngIf="colVisible && !stopB">
+      <b>{{ horasB | number: '2.0' }}:{{ minutosB | number: '2.0' }}:{{ segundosB | number: '2.0' }}</b>
     </ion-col>
   </ion-row>
   <br>
   <ion-row class="ion-text-center" style="padding-left: 20px; padding-right: 20px">
-    <ion-col size="1.6" style="border: solid 1px black; background-color: rgb(180, 175, 175);">
+    <ion-col size="1.6" style="border: solid 1px black; background-color: rgb(180, 175, 175); font-size: 81%;">
       <b>REFERENCIA DE CAJA</b>
     </ion-col>
     <ion-col size="1.6" style="border: solid 1px black; background-color: rgb(180, 175, 175); border-right: none; border-left: none;">
       <b>BOLSAS POR CAJA</b>
     </ion-col>
-    <ion-col size="1.6" style="border: solid 1px black; background-color: rgb(180, 175, 175);">
+    <ion-col size="1.6" style="border: solid 1px black; background-color: rgb(180, 175, 175); font-size: 80%;">
       <b>UNIDADES FABRICADAS</b>
     </ion-col>
     <ion-col size="1.6" style="border: solid 1px black; background-color: rgb(180, 175, 175); border-right: none; border-left: none;">
@@ -258,13 +261,12 @@
       <b>NÚMERO DE CAJAS</b>
     </ion-col>
   </ion-row>
-
   <ion-row class="ion-text-center" style="padding-left: 20px; padding-right: 20px">
     <ion-col size="1.6" style="border: solid 1px black;">
       <ion-textarea [(ngModel)]="referenciaCaja"></ion-textarea>
     </ion-col>
     <ion-col size="1.6" style="border: solid 1px black;">
-      <ion-textarea inputmode="number" [(ngModel)]="bolsasCaja"></ion-textarea>
+      <ion-textarea [(ngModel)]="bolsasCaja"></ion-textarea>
     </ion-col>
     <ion-col size="1.6" style="border: solid 1px black;">
       <ion-textarea inputmode="number" [(ngModel)]="undFabricadas"></ion-textarea>
@@ -288,12 +290,12 @@
   <ion-row class="ion-text-center" style="background-color: rgb(180, 175, 175);margin-left: 20px; margin-right: 20px; border: solid 1px black;">
     <b style="margin-left: 40%">OBSERVACIONES</b>
   </ion-row>
-  <ion-row class="ion-text-center" style="border: solid 1px black; margin-left: 20px; margin-right: 20px; border-top: none;">
-    Aqui iría la descripción
-    <br>
+  <ion-row class="ion-text-center" style="margin-left: 20px; margin-right: 20px;">
+    <ion-col style="border: solid 1px black; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+      <ion-textarea disabled="true">Aqui se mostrara las observaciones del operario</ion-textarea>
+    </ion-col>
   </ion-row>
 </ion-content>
-
                                                                       <!-- ORDEN DE IMPRESION -->
 <ion-content *ngIf="estado == 'OI'">
 <div style="background-color: rgb(97, 176, 212); margin-right: 20px;margin-left: 20px">
@@ -367,15 +369,15 @@
           <ion-select-option value="2">REPETICIÓN</ion-select-option>
           <ion-select-option value="3">MODIFICADO</ion-select-option>
         </ion-select>
-        </ion-col>
-        <ion-col style="display: flex; align-items: center; justify-content: left;">
-          <b>ADJUNTADO:</b>
-          <ion-select placeholder="Seleccionar..." class="cambio-color" interface="popover" [(ngModel)]="adjuntadoCheck" (ionChange)="adjuntadoCheck">
-            <ion-select-option value="1">BOLSA</ion-select-option>
-            <ion-select-option value="2">BOCETO</ion-select-option>
-            <ion-select-option value="3">BOLSA COMP</ion-select-option>
-          </ion-select>
-          </ion-col>
+      </ion-col>
+      <ion-col style="display: flex; align-items: center; justify-content: left;">
+        <b>ADJUNTADO:</b>
+        <ion-select placeholder="Seleccionar..." class="cambio-color" interface="popover" [(ngModel)]="adjuntadoCheck" (ionChange)="adjuntadoCheck">
+          <ion-select-option value="1">BOLSA</ion-select-option>
+          <ion-select-option value="2">BOCETO</ion-select-option>
+          <ion-select-option value="3">BOLSA COMP</ion-select-option>
+        </ion-select>
+      </ion-col>
     </ion-row>
   <br>
     <ion-row class="ion-text-center" style="margin-right: 20px;margin-left: 20px">
@@ -806,7 +808,6 @@
         <b *ngIf="cronoCT">{{totalCT}}</b></ion-textarea>
     </ion-col>
   </ion-row>
-
 <ion-row class="ion-text-center" *ngIf="!cronoCD || !cronoCT">
   <ion-col size="6">
   </ion-col>
@@ -835,7 +836,6 @@
         <b *ngIf="cronoIT">{{totalIT}}</b></ion-textarea>
     </ion-col>
   </ion-row>
-
   <ion-row class="ion-text-center" *ngIf="!cronoID || !cronoIT">
     <ion-col size="6">
     </ion-col>
@@ -864,7 +864,6 @@
         <b *ngIf="cronoCT2">{{totalCT2}}</b></ion-textarea>
     </ion-col>
   </ion-row>
-
 <ion-row class="ion-text-center" *ngIf="!cronoCD2 || !cronoCT2">
   <ion-col size="6">
   </ion-col>
@@ -889,7 +888,6 @@
   </ion-row>
 </div>
 </ion-content>
-
                                                   <!-- CONTROL DE CALIDAD DE FABRICACION -->
 <ion-content class="bonito" *ngIf="estado == 'COF'">
   <br>
@@ -899,7 +897,7 @@
         <b>FECHA</b>
       </ion-col>
       <ion-col style="border: solid 1px black; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-        {{fecha}}
+        {{fecha | date: 'dd-MM-yyyy'}}
       </ion-col>
     </ion-col>
   </ion-row>
@@ -920,67 +918,65 @@
   </ion-row>
   <br>
 <ion-row style="margin-right: 20px;margin-left: 20px">
-  <ion-col>
+  <ion-col size="4">
     Máquina asignada adecuada
   </ion-col>
   <ion-checkbox [(ngModel)]="Comp1" [disabled]="validar" (click)="onCheckboxChange($event, 'Comp1', 0)"></ion-checkbox>
   <ion-col></ion-col>
-  <ion-col>
+  <ion-col size="4">
     Ojal, abrefácil y su ubicación
   </ion-col>
   <ion-checkbox [(ngModel)]="Comp2" [disabled]="validar" (click)="onCheckboxChange($event, 'Comp2', 0)"></ion-checkbox>
 </ion-row>
 <ion-row style="margin-right: 20px;margin-left: 20px">
-  <ion-col>
+  <ion-col size="4">
     Material
   </ion-col>
   <ion-checkbox [(ngModel)]="Comp5" [disabled]="validar" (click)="onCheckboxChange($event, 'Comp5', 0)"></ion-checkbox>
   <ion-col></ion-col>
-  <ion-col>
+  <ion-col size="4">
     Ver boceto de muestra
   </ion-col>
   <ion-checkbox [(ngModel)]="Comp6" [disabled]="validar" (click)="onCheckboxChange($event, 'Comp6', 0)"></ion-checkbox>
 </ion-row>
 <ion-row style="margin-right: 20px;margin-left: 20px">
-  <ion-col>
+  <ion-col size="4">
     Ancho de la bobina*
   </ion-col>
     <ion-checkbox [(ngModel)]="Comp7" [disabled]="validar" (click)="onCheckboxChange($event, 'Comp7', 0)"></ion-checkbox>
     <ion-col></ion-col>
-  <ion-col>
+  <ion-col size="4">
     Comprobar distancia a fondo
   </ion-col>
   <ion-checkbox [(ngModel)]="Comp8" [disabled]="validar" (click)="onCheckboxChange($event, 'Comp8', 0)"></ion-checkbox>
 </ion-row>
 <ion-row style="margin-right: 20px;margin-left: 20px">
-  <ion-col>
+  <ion-col size="4">
     Micraje de la bobina*
   </ion-col>
   <ion-checkbox [(ngModel)]="Comp9" [disabled]="validar" (click)="onCheckboxChange($event, 'Comp9', 0)"></ion-checkbox>
 <ion-col></ion-col>
-<ion-col>
+<ion-col size="4">
   Número de bolsas por ancho
 </ion-col>
 <ion-checkbox [(ngModel)]="Comp11" [disabled]="validar" (click)="onCheckboxChange($event, 'Comp11', 0)"></ion-checkbox>
 </ion-row>
 <ion-row style="margin-right: 20px;margin-left: 20px">
-  <ion-col>
+  <ion-col size="4">
     Metro lineales asignados correctos
   </ion-col>
   <ion-checkbox [(ngModel)]="Comp13" [disabled]="validar" (click)="onCheckboxChange($event, 'Comp13', 0)"></ion-checkbox>
   <ion-col></ion-col>
-  <ion-col>
+  <ion-col size="4">
     Etiquetas
   </ion-col>
   <ion-checkbox [(ngModel)]="Comp14" [disabled]="validar" (click)="onCheckboxChange($event, 'Comp14', 0)"></ion-checkbox>
 </ion-row>
 <ion-row style="margin-right: 20px;margin-left: 20px">
-  <ion-col size="3.7">
+  <ion-col size="4">
     Donde se realizan las soldaduras
   </ion-col>
   <ion-checkbox [(ngModel)]="Comp4" [disabled]="validar" (click)="onCheckboxChange($event, 'Comp4', 0)"></ion-checkbox>
-  <ion-col></ion-col>
-  <ion-col></ion-col>
 </ion-row>
 <br>
 <ion-col style="font-size: smaller; margin-right: 20px; margin-left: 20px;">
@@ -1053,51 +1049,41 @@
   </ion-col>
 </ion-row>
 <br>
-<ion-row class="ion-text-center" style="margin-right: 20px; margin-left: 20px; padding-right:68%">
-  <ion-col>
-   Sombrero
-  </ion-col>
-  <ion-col style="border: solid 1px black; max-height: 50px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-    <ion-textarea *ngIf="mostrarSombrero" disabled="true">{{sombrero}}</ion-textarea>
-    <ion-checkbox [disabled]="!validar" [(ngModel)]="checkboxSombrero" (ionChange)="toggleSombrero()"></ion-checkbox>
-  </ion-col>
-</ion-row>
-<br>
-<ion-row class="ion-text-center" style="font-size: smaller; background-color: rgb(180, 175, 175);margin-left: 163px; margin-right: 164px; border: solid 1px black; border-bottom: none;">
+<ion-row class="ion-text-center" style="font-size: smaller; background-color: rgb(180, 175, 175);margin-left: 21%; margin-right: 21%; border: solid 1px black; border-bottom: none;">
   <b style="margin-left: 33%">PRESIÓN DE ROTURA</b>
 </ion-row>
 <ion-row class="ion-text-center" style="flex-wrap: nowrap !important; padding-left: 20px; padding-right: 20px; font-size: smaller;">
-  <ion-col size="1.2" style="font-size: smaller; border: solid 1px black; background-color: rgb(180, 175, 175); border-right: none">
+  <ion-col size="1.2" style="border: solid 1px black; background-color: rgb(180, 175, 175); border-right: none">
     <b>CAJA/</b>
     <br>
     <b>UNIDAD</b>
   </ion-col>
-  <ion-col size="1.2" style="font-size: smaller; border: solid 1px black; background-color: rgb(180, 175, 175);">
+  <ion-col size="1.2" style="border: solid 1px black; background-color: rgb(180, 175, 175);">
     <b>HORA</b>
   </ion-col>
-  <ion-col size="1.2" style="font-size: smaller; border: solid 1px black; border-right: none;  border-left: none;">
+  <ion-col size="1.2" style="font-size: 96%; border: solid 1px black; border-right: none;  border-left: none;">
     <b>POSICIÓN 1</b>
   </ion-col>
-  <ion-col size="1.2" style="font-size: smaller; border: solid 1px black; border-right: none;">
+  <ion-col size="1.2" style="font-size: 94%; border: solid 1px black; border-right: none;">
     <b>POSICIÓN 2</b>
   </ion-col>
-  <ion-col size="1.2" style="font-size: smaller; border: solid 1px black; border-right: none;">
+  <ion-col size="1.2" style="font-size: 94%; border: solid 1px black; border-right: none;">
     <b>POSICIÓN 3</b>
   </ion-col>
-  <ion-col size="1.2" style="font-size: smaller; border: solid 1px black; border-right: none;">
+  <ion-col size="1.2" style="font-size: 94%; border: solid 1px black; border-right: none;">
     <b>POSICIÓN 4</b>
   </ion-col>
-  <ion-col size="1.2" style="font-size: smaller; border: solid 1px black; border-right: none;">
+  <ion-col size="1.2" style="font-size: 94%; border: solid 1px black; border-right: none;">
     <b>POSICIÓN 5</b>
   </ion-col>
-  <ion-col size="1.2" style="font-size: smaller; border: solid 1px black; border-right: none;">
+  <ion-col size="1.2" style="font-size: 94%; border: solid 1px black; border-right: none;">
     <b>POSICIÓN 6</b>
   </ion-col>
-  <ion-col size="1.2" style="font-size: smaller; border: solid 1px black; border-right: none; background-color: rgb(180, 175, 175);">
-    <b>ESTANQUEIDAD</b>
+  <ion-col size="1.2" style="border: solid 1px black; border-right: none; background-color: rgb(180, 175, 175);">
+    <b>ESTAN-QUEIDAD</b>
   </ion-col>
-  <ion-col size="1.2" style="font-size: smaller; border: solid 1px black; background-color: rgb(180, 175, 175);">
-    <b>RETRACTILADO</b>
+  <ion-col size="1.2" style="border: solid 1px black; background-color: rgb(180, 175, 175);">
+    <b>RETRAC-TILADO</b>
   </ion-col>
 </ion-row>
 <ion-row class="ion-text-center" style="padding-left: 20px; padding-right: 20px">
@@ -1108,7 +1094,7 @@
     <ion-col size="1.2" style="font-size: smaller; border: solid 1px black; max-height: 35px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-top: none;">
       <ion-textarea [disabled]="true">{{roto.Hora}}</ion-textarea>
     </ion-col>
-    <ion-col size="1.2" style="font-size: smaller; border: solid 1px black; max-height: 35px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-right: none; border-top: none;">
+    <ion-col size="1.2" style="font-size: smaller; border: solid 1px black; max-height: 35px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-right: none; border-top: none; border-left: none;">
       <ion-textarea [disabled]="true">{{roto.Posicion1}}</ion-textarea>
     </ion-col>
     <ion-col size="1.2" style="font-size: smaller; border: solid 1px black; max-height: 35px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-right: none; border-top: none;">
@@ -1129,7 +1115,7 @@
     <ion-col size="1.2" style="font-size: smaller; border: solid 1px black; max-height: 35px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-right: none; border-top: none; ">
       <ion-textarea [disabled]="true">{{roto.Estanqueidad}}</ion-textarea>
     </ion-col>
-    <ion-col size="1.2" style="font-size: smaller; border: solid 1px black; max-height: 35px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-right: none; border-top: none; ">
+    <ion-col size="1.2" style="font-size: smaller; border: solid 1px black; max-height: 35px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-top: none; ">
       <ion-textarea [disabled]="true">{{roto.Retractilado}}</ion-textarea>
     </ion-col>
   </ion-row>
@@ -1137,7 +1123,8 @@
     <ion-textarea [disabled]="!validar" [(ngModel)]="cajaUnidad"></ion-textarea>
   </ion-col>
   <ion-col size="1.2" style="font-size: smaller; border: solid 1px black; max-height: 35px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-top: none;">
-    <ion-textarea [disabled]="!validar" [(ngModel)]="hora"></ion-textarea>
+    <ion-textarea *ngIf="mostrarHora" disabled="true">{{hora}}</ion-textarea>
+    <ion-checkbox [disabled]="!validar" [(ngModel)]="checkboxHora" (ionChange)="toggleHora()"></ion-checkbox>
   </ion-col>
   <ion-col size="1.2" style="border: solid 1px black; max-height: 35px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-right: none; border-left: none; border-top: none;">
     <ion-textarea [disabled]="!validar" [(ngModel)]="posicion1"></ion-textarea>
@@ -1221,8 +1208,7 @@
   </ion-col>
 </ion-row>
 </ion-content>
-
-<!-- ORDEN DE LAMINACION -->
+                                                  <!-- ORDEN DE LAMINACION -->
 <ion-content *ngIf="estado == 'OL'">
   <br>
   <ion-row class="ion-text-center" style="margin-right: 20px;margin-left: 20px">
@@ -1270,13 +1256,13 @@
     </ion-col>
   </ion-row>
   <ion-row class="ion-text-center" style="padding-left: 20px; padding-right: 20px">
-    <ion-col style="font-size: 70%; border: solid 1px black; max-height: 35px; background-color: rgb(180, 175, 175); border-right: none;">
+    <ion-col style="font-size: 90%; border: solid 1px black; max-height: 35px; background-color: rgb(180, 175, 175); border-right: none;">
       <b>LOTE DE PRODUCCIÓN</b>
     </ion-col>
     <ion-col style="border: solid 1px black; max-height: 35px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-right: none; border-top: none;">
       <ion-textarea [(ngModel)]="loteL"></ion-textarea>
     </ion-col>
-    <ion-col style="font-size: 70%; border: solid 1px black; max-height: 35px; background-color: rgb(180, 175, 175); border-right: none;">
+    <ion-col style="font-size: 85%; border: solid 1px black; max-height: 35px; background-color: rgb(180, 175, 175); border-right: none;">
       <b>CONTADOR HORAS DE MÁQUINA</b>
     </ion-col>
     <ion-col style="border: solid 1px black; max-height: 35px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-top: none;">
@@ -1285,30 +1271,30 @@
   </ion-row>
   <br><br>
   <ion-row class="ion-text-center" style="margin-right: 20px;margin-left: 20px">
-    <ion-col size="6" style="border: solid 1px black; font-size: 70%; background-color: rgb(180, 175, 175); border-bottom: none;">
+    <ion-col size="6" style="border: solid 1px black; background-color: rgb(180, 175, 175); border-bottom: none;">
       <b>MATERIAL ASIGNADO</b>
     </ion-col>
     </ion-row>
     <ion-row class="ion-text-center" style="margin-right: 20px;margin-left: 20px">
-      <ion-col size="1.5" style="border: solid 1px black; font-size: 70%; background-color: rgb(180, 175, 175); border-bottom: none;border-right: none;">
+      <ion-col size="1.5" style="border: solid 1px black; background-color: rgb(180, 175, 175); border-bottom: none;border-right: none;">
         <b>TIPO</b>
       </ion-col>
-      <ion-col size="1.5" style="border: solid 1px black; font-size: 70%; background-color: rgb(180, 175, 175); border-bottom: none;border-right: none;">
+      <ion-col size="1.5" style="border: solid 1px black; background-color: rgb(180, 175, 175); border-bottom: none;border-right: none;">
         <b>ANCHO</b>
       </ion-col>
-      <ion-col size="3" style="border: solid 1px black; font-size: 70%; background-color: rgb(180, 175, 175); border-bottom: none;border-right: none;">
+      <ion-col size="3" style="border: solid 1px black; background-color: rgb(180, 175, 175); border-bottom: none;border-right: none;">
         <b>LOTES</b>
       </ion-col>
-      <ion-col size="3" style="border: solid 1px black; font-size: 70%; background-color: rgb(180, 175, 175); border-bottom: none;border-right: none;">
+      <ion-col size="3" style="border: solid 1px black; background-color: rgb(180, 175, 175); border-bottom: none;border-right: none;">
         <b>METROS A LAMINAR</b>
       </ion-col>
-      <ion-col size="3" style="border: solid 1px black; font-size: 70%; background-color: rgb(180, 175, 175); border-bottom: none;">
+      <ion-col size="3" style="border: solid 1px black; background-color: rgb(180, 175, 175); border-bottom: none;">
         <b>METROS NO CONSUMIDOS</b>
       </ion-col>
       </ion-row>
     <ion-row class="ion-text-center" style="margin-right: 20px;margin-left: 20px">
-      <ion-col size="0.5" style="border: solid 1px black; font-size: 70%; background-color: rgb(180, 175, 175); border-bottom: none;border-right: none;">
-        <b><br><br>A</b>
+      <ion-col size="0.5" style="border: solid 1px black; background-color: rgb(180, 175, 175); border-bottom: none;border-right: none;">
+        <b><br>A</b>
       </ion-col>
       <ion-col size="1" style="border: solid 1px black; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-bottom: none;border-right: none;">
         <ion-textarea [(ngModel)]="tipoA"></ion-textarea>
@@ -1327,8 +1313,8 @@
       </ion-col>
     </ion-row>
     <ion-row class="ion-text-center" style="margin-right: 20px;margin-left: 20px">
-      <ion-col class="ion-text-center" size="0.5" style="border: solid 1px black; font-size: 70%; background-color: rgb(180, 175, 175); border-right: none;">
-        <b><br><br>B</b>
+      <ion-col class="ion-text-center" size="0.5" style="border: solid 1px black; background-color: rgb(180, 175, 175); border-right: none;">
+        <b><br>B</b>
       </ion-col>
       <ion-col size="1" style="border: solid 1px black; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-right: none;">
         <ion-textarea [(ngModel)]="tipoB"></ion-textarea>
@@ -1363,12 +1349,11 @@
       </ion-col>
     </ion-row>
 </ion-content>
-
-<!-- ORDEN DE REBOBINADO -->
+                                                          <!-- ORDEN DE REBOBINADO -->
 <ion-content *ngIf="estado == 'OR'">
   <br>
   <ion-row class="ion-text-center" style="margin-right: 20px;margin-left: 20px">
-    <ion-col style="font-size: 70%; background-color: rgb(180, 175, 175)">
+    <ion-col style="background-color: rgb(180, 175, 175)">
       <b>FECHA PEDIDO</b>
     </ion-col>
     <ion-col style="border: solid 1px black">
@@ -1381,14 +1366,14 @@
     </ion-col>
   </ion-row>
   <ion-row class="ion-text-center" style="margin-right: 20px;margin-left: 20px">
-      <ion-col style="font-size: 70%; background-color: rgb(180, 175, 175)">
+      <ion-col style="font-size: 78%; background-color: rgb(180, 175, 175)">
         <b>FECHA DE LA ORDEN</b>
       </ion-col>
       <ion-col style="border: solid 1px black">
         <b>{{orden.FechaOF | date: 'dd/MM/yyyy'}}</b>
       </ion-col>
       <ion-col size="2.5"></ion-col>
-      <ion-col style="font-size: 70%; background-color: rgb(180, 175, 175)">
+      <ion-col style="font-size: 81%; background-color: rgb(180, 175, 175)">
         <b>NÚMERO DE PEDIDO</b>
       </ion-col>
       <ion-col style="border: solid 1px black">
@@ -1423,8 +1408,6 @@
   </ion-row>
   <br>
   <ion-row class="ion-text-center" style="margin-right: 20px;margin-left: 20px">
-    <ion-col style="border-bottom: solid 1px black; border-left: none; border-right: none; border-top: none; background-color: rgb(180, 175, 175);">
-    </ion-col>
     <ion-col size="5" style="border-bottom: solid 1px black; border-left: none; border-right: none; border-top: none; background-color: rgb(180, 175, 175);">
       <b>MATERIAL</b>
     </ion-col>
@@ -1436,69 +1419,69 @@
     </ion-col>
   </ion-row>
   <ion-row class="ion-text-center" style="margin-right: 20px;margin-left: 20px" *ngFor="let item of materiales; let i = index">
-    <ion-col style="border: solid 1px black; max-height: 35px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-top: none; border-right: none;">
-      <ion-textarea disabled="true"></ion-textarea>
-    </ion-col>
     <ion-col size="5" style="border: solid 1px black; max-height: 35px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-top: none; border-right: none;">
       <b>{{item.Material}}</b>
     </ion-col>
     <ion-col style="border: solid 1px black; max-height: 35px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-top: none; border-right: none;">
-      <b>{{item.Ancho}}</b>
+      <b>{{item.Ancho | number: '1.0-0' : 'es'}}</b>
     </ion-col>
     <ion-col style="border: solid 1px black; max-height: 35px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-top: none;">
-      <b>{{item.Largo}}</b>
+      <b>{{item.Largo | number: '1.0-0' : 'es'}}</b>
     </ion-col>
   </ion-row>
 <br>
 <ion-row class="ion-text-center" style="margin-right: 20px;margin-left: 20px">
-  <ion-col style="font-size: 70%; border-bottom: solid 1px black; border-left: none; border-right: none; border-top: none; background-color: rgb(180, 175, 175);">
-    <b>BOBINAS RESULTANTES</b>
-  </ion-col>
   <ion-col size="5" style="border-bottom: solid 1px black; border-left: none; border-right: none; border-top: none; background-color: rgb(180, 175, 175);">
     <b>MATERIAL</b>
   </ion-col>
-  <ion-col style="border-bottom: solid 1px black; border-left: none; border-right: none; border-top: none; background-color: rgb(180, 175, 175);">
+  <ion-col size="2.5" style="border-bottom: solid 1px black; border-left: none; border-right: none; border-top: none; background-color: rgb(180, 175, 175);">
     <b>ANCHO (mm)</b>
   </ion-col>
-  <ion-col style="border-bottom: solid 1px black; border-left: none; border-right: none; border-top: none; background-color: rgb(180, 175, 175);">
+  <ion-col size="2.5" style="border-bottom: solid 1px black; border-left: none; border-right: none; border-top: none; background-color: rgb(180, 175, 175);">
     <b>LARGO (m)</b>
   </ion-col>
-</ion-row>
-<ion-row class="ion-text-center" style="margin-right: 20px;margin-left: 20px" *ngFor="let item of materiales; let i = index">
-  <ion-col style="border: solid 1px black; max-height: 35px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-top: none; border-right: none;">
-    <ion-button class="full-button" (click)="actualizarBobina(i)" fill="clear" shape="round" [disabled]="botonBobina !== i">
-      Actualizar
-    </ion-button>
+  <ion-col size="2" style="border-bottom: solid 1px black; border-left: none; border-right: none; border-top: none; background-color: rgb(180, 175, 175);">
+    <b>PROCESADO SAGE</b>
   </ion-col>
+</ion-row>
+<ion-row class="ion-text-center" style="margin-right: 20px;margin-left: 20px" *ngFor="let bobis of selectedBobina let i = index">
   <ion-col size="5" style="border: solid 1px black; max-height: 35px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-top: none; border-right: none;">
-    <b>{{item.Material}}</b>
+    <b>{{bobis.DescripcionArticulo}}</b>
   </ion-col>
-  <ion-col style="border: solid 1px black; max-height: 35px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-top: none; border-right: none;">
-    <ion-textarea inputmode="number" [(ngModel)]="anchoBobina[i]" (input)="verificarCamposVacios(i)"><b></b></ion-textarea>
+  <ion-col size="2.5" style="border: solid 1px black; max-height: 35px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-top: none; border-right: none;">
+    <b><ion-input type="number" [(ngModel)]="anchoBobi[i]"></ion-input></b>
   </ion-col>
-  <ion-col style="border: solid 1px black; max-height: 35px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-top: none;">
-    <ion-textarea inputmode="number" [(ngModel)]="largoBobina[i]" (input)="verificarCamposVacios(i)"><b></b></ion-textarea>
+  <ion-col size="2.5" style="border: solid 1px black; max-height: 35px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-top: none;">
+    <b><ion-input type="number" [(ngModel)]="largoBobi[i]"></ion-input></b>
+  </ion-col>
+  <ion-col size="2" style="border: solid 1px black; max-height: 35px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-top: none; border-left: none;">
+    <ion-checkbox [(ngModel)]="checkSage[i]"></ion-checkbox>
   </ion-col>
 </ion-row>
+<br>
+<ion-searchbar *ngIf="ocultarBotonR" color="light" placeholder="Bobina" [debounce]="1000" show-clear-button="focus" (ionInput)="buscarBobina($event)" (ionClear)="limpiarBusqueda()"></ion-searchbar>
+<ion-list style="width:100%;" *ngIf="bobinaFiltrada.length > 0 && escribir !== ''">
+  <ion-item *ngFor="let registro of bobinaFiltrada" (click)="seleccionarBobina(registro)">
+    <ion-label>
+      <h2>{{registro.DescripcionArticulo}}</h2>
+      <!-- <p>Largo: {{ registro.Largo_ | number: '1.0-0' : 'es' }} | Ancho: {{ registro.Ancho_ | number: '1.0-0' : 'es' }}</p> -->
+      <p>Código Artículo: {{registro.CodigoArticulo}}</p>
+    </ion-label>
+  </ion-item>
+</ion-list>
 <br>
 <ion-row class="ion-text-center" style="background-color: rgb(180, 175, 175);margin-left: 20px; margin-right: 20px; border: solid 1px black;">
   <b style="margin-left: 40%">OBSERVACIONES</b>
 </ion-row>
 <ion-row class="ion-text-center" style="border: solid 1px black; margin-left: 20px; margin-right: 20px;">
   <ion-col style="border: solid 1px black; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-    <ion-textarea [(ngModel)]="observacionesR"></ion-textarea>
+    <ion-textarea [disabled]="!ocultarBotonR" [(ngModel)]="observacionesR"></ion-textarea>
   </ion-col>
 </ion-row>
-
-
 </ion-content>
 
-
 <ion-footer>
-
   <ion-toolbar *ngIf="estado == 'OF' &&  !tabbar">
-      <ion-buttons slot="start" *ngIf="colVisible && !stopB">
-        <ion-button fill="solid" color="danger" (click)="finalizarBobina()">Finalizar Bobinado</ion-button></ion-buttons>
     <ion-buttons slot="start" *ngIf="!crono && orden.EstadoOF == 1 ">
       <ion-button fill="solid" color="primary" (click)="iniciarCronometro()">Iniciar Orden</ion-button></ion-buttons>
     <ion-buttons slot="start" *ngIf="crono && orden.EstadoOF == 1 ">
@@ -1508,47 +1491,40 @@
     <ion-buttons slot="end" *ngIf="ocultarBoton ">
       <ion-button fill="solid" color="danger" (click)="finOFtoCalidad('COF')">Control de Calidad</ion-button></ion-buttons>
   </ion-toolbar>
-
   <ion-toolbar *ngIf="estado == 'COF' && !tabbar">
         <ion-buttons slot="start" *ngIf="!validar">
           <ion-button fill="solid" color="primary" (click)="validaVerificacion()">Validar Verificacion</ion-button></ion-buttons>
-      <ion-buttons slot="start" *ngIf="validar && !finCalidad && calidad">
+      <ion-buttons slot="start" *ngIf="validar && !finCalidad">
         <ion-button fill="solid" color="danger" (click)="controlCalidad()">Terminar Control de Calidad</ion-button></ion-buttons>
   </ion-toolbar>
-
   <ion-toolbar *ngIf="estado == 'OI' && !tabbar">
     <ion-buttons slot="start">
       <ion-button fill="solid" color="primary" (click)="agregarOrdenImpresion()">Subir Orden Impresion</ion-button></ion-buttons>
   </ion-toolbar>
-
   <ion-toolbar *ngIf="estado == 'OL' && !tabbar">
     <ion-buttons slot="start" [hidden]="ocultarBotonL">
       <ion-button fill="solid" color="primary" (click)="iniciarLaminado()">Iniciar Laminación</ion-button></ion-buttons>
     <ion-buttons slot="end" [hidden]="!ocultarBotonL">
       <ion-button fill="solid" color="danger" (click)="finalizarLaminado()">Finalizar Laminación</ion-button></ion-buttons>
   </ion-toolbar>
-
   <ion-toolbar *ngIf="estado == 'OR' && !tabbar">
     <ion-buttons slot="start" [hidden]="ocultarBotonR">
       <ion-button fill="solid" color="primary" (click)="iniciarRebobinado()">Iniciar Rebobinado</ion-button></ion-buttons>
     <ion-buttons slot="end" [hidden]="!ocultarBotonR">
       <ion-button fill="solid" color="danger" (click)="finalizarRebobinado()">Finalizar Rebobinado</ion-button></ion-buttons>
   </ion-toolbar>
-
-  <ion-toolbar>
+  <!-- <ion-toolbar>
     <label *ngIf="produccion > 0"> Se encuentra en fase {{orden.Fases}}</label>
     <label *ngIf="produccion == 0"> No se encuentra en la cadena de fabricación</label>
     <ion-buttons slot="end" *ngIf="produccion == 0">
       <ion-button fill="solid" color="primary">Pasar a fabricación</ion-button></ion-buttons>
     <ion-buttons slot="end" *ngIf="produccion > 0">
       <ion-button fill="solid" color="primary">Cambiar de fase</ion-button></ion-buttons>
-  </ion-toolbar>
-
+  </ion-toolbar> -->
   <!-- AQUI SE HACE EL SELECT DEL OPERARIO EXTRA -->
   <ion-select id="operarioext" style="display:none" *ngIf="tabbar" placeholder="Elige un operario extra" (ionChange)="selectChange($event)">
     <ng-container *ngFor="let item of todosoperarios[0]">
       <ion-select-option [value]="item.CodigoEmpleado" *ngIf="item.Rol == 1">{{item.Empleado}}</ion-select-option>
     </ng-container>
-  </ion-select>
-  
+  </ion-select>  
 </ion-footer>

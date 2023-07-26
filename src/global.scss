@@ -40,10 +40,11 @@ ion-modal.small-modal{
 
 ion-modal.modalOF{
     --background: rgb(179, 179, 179)!important;
-    --height: 13% !important;
-    --width: 55% !important;
+    --height: 35% !important;
+    --width: 70% !important;
+    --backdrop-opacity: 0.4 !important;
     &::part(content){
-        border: 2px solid black
+        border: 1px solid black
     }
 }
 

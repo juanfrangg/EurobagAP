@@ -12,24 +12,24 @@
 </ion-header>
 
 <ion-content>
-  <ion-item>
-    <ion-col><b>FECHA</b></ion-col>
-    <ion-col><b>ARTÍCULO</b></ion-col>
-    <ion-col><b>OBSERVACIÓN</b></ion-col>
-    <ion-col><b>CANTIDAD</b></ion-col>
-    <ion-col><b>CLIENTE</b></ion-col>
-    <ion-col><b>Nº PEDIDO</b></ion-col>
-    <ion-col><b>FASE</b></ion-col>
+  <ion-item class="ion-text-center">
+    <ion-col size="1.2"><b>FECHA</b></ion-col>
+    <ion-col size="2.2"><b>DESCRIPCIÓN 1</b></ion-col>
+    <ion-col size="2.2"><b>DESCRIPCIÓN 2</b></ion-col>
+    <ion-col size="1.7"><b>CANTIDAD</b></ion-col>
+    <ion-col size="1.7"><b>CLIENTE</b></ion-col>
+    <ion-col size="1.2"><b>PEDIDO</b></ion-col>
+    <ion-col size="1.7"><b>FASE</b></ion-col>
   </ion-item>
 
-      <ion-item *ngFor="let orden of ordenesMostrar" (click)="abrirOrden(orden)">
-        <ion-col>{{orden.fecha}}</ion-col>
-        <ion-col>{{orden.DescripcionArticulo}}</ion-col>
-        <ion-col>{{orden.Descripcion2Articulo}}</ion-col>
-        <ion-col>{{orden.Unidades}}</ion-col>
-        <ion-col>{{orden.cliente}}</ion-col>
-        <ion-col>{{orden.NumeroOF}}</ion-col>
-        <ion-col>{{orden.fase}}</ion-col>
+      <ion-item class="ion-text-center" *ngFor="let orden of ordenesMostrar" (click)="abrirOrden(orden)">
+        <ion-col size="1.2">{{orden.fecha | date: 'dd-MM-yyyy'}}</ion-col>
+        <ion-col size="2.2">{{orden.DescripcionArticulo}}</ion-col>
+        <ion-col size="2.2">{{orden.Descripcion2Articulo}}</ion-col>
+        <ion-col size="1.7">{{orden.Unidades}}</ion-col>
+        <ion-col size="1.7">{{orden.cliente}}</ion-col>
+        <ion-col size="1.2">{{orden.NumeroOF}}</ion-col>
+        <ion-col size="1.7">{{orden.fase}}</ion-col>
       </ion-item>
 
   <ion-tabs>

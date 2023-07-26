@@ -10,8 +10,23 @@
 </ion-header>
 
 <ion-content class="ion-text-center">
-  <br>
- <div style="background-color: rgb(97, 207, 111); padding: 10px; margin: 0 auto; max-width: 40%; max-height: 40%;">
-  <h2 style="margin: 0 auto;"><b>{{ horas | number: '2.0' }}:{{ minutos | number: '2.0' }}:{{ segundos | number: '2.0' }}</b></h2>
- </div>
+  <ion-button (click)="abrirSelect()">Selecciona la bobina a montar</ion-button>
+  <ion-select #miSelect class="oculto" placeholder="Selecciona las bobinas a montar" multiple (ionChange)="onMatsSelec($event)">
+    <ion-select-option *ngFor="let material of materiales" [value]="material.ID" >{{ material.Material }}</ion-select-option>
+  </ion-select>
+<br><br>
+  <div style="background-color: rgb(97, 207, 111); padding: 10px; margin: 0 auto; max-width: 40%; max-height: 53%;">
+    <h2 style="margin: 0 auto;"><b>{{ horas | number: '2.0' }}:{{ minutos | number: '2.0' }}:{{ segundos | number: '2.0' }}</b></h2>
+  </div>
+<br>
+<p><b>Bobinas seleccionadas:</b></p>
+  <ion-list style="width:100%; background-color: rgb(179, 179, 179);">
+    <ion-item *ngFor="let registro of materialesSeleccionados">
+      <ion-label>
+        <h2>{{registro.Material}}</h2>
+        <p>Ancho: {{ registro.Ancho | number: '1.0-0' : 'es' }} | Largo: {{ registro.Largo | number: '1.0-0' : 'es' }}</p>
+        <p>Partida: {{registro.Partida}}</p>
+      </ion-label>
+    </ion-item>
+  </ion-list>
 </ion-content>
